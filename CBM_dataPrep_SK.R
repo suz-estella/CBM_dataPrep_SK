@@ -71,7 +71,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
-      sourceURL = "https://drive.google.com/file/d/1YMg0zf8pqBPii0REvBvnj8Yh9CQ3HhRD"
+      sourceURL = "https://drive.google.com/file/d/1Tsm1a1HJr8DIxLURqc9vb1Qis-TK56Xh"
     ),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
@@ -89,7 +89,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "gcIndexRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr/view?usp=sharing"
+      sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"
     ),
     expectsInput(
       objectName = "spuRaster", objectClass = "raster",
@@ -368,8 +368,9 @@ Init <- function(sim) {
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
   distName <- c(rep(userDist$distName, length(spu)))
   rasterId <- c(rep(userDist$rasterId, length(spu)))
+  wholeStand <- c(rep(userDist$wholeStand, length(spu)))
   spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
-  mySpuDmids <- data.table(distName, rasterId, spatial_unit_id)
+  mySpuDmids <- data.table(distName, rasterId, spatial_unit_id, wholeStand)
 
   dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
 
@@ -384,9 +385,11 @@ Init <- function(sim) {
       getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
       dmid[i, ] <- getDist[1, ]
     }
-  } ## bunch of warnings here...
+  }
+
+  ## bunch of warnings here...
   mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-  names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "disturbance_matrix_id")
+  names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
   sim$mySpuDmids <- mySpuDmids
   # need to match the historic and last past dist to the spatial unit
   # DECISION: both the last pass and the historic disturbance will be the same
@@ -494,6 +497,7 @@ Init <- function(sim) {
       sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
                                  fun = "data.table::fread",
                                  destinationPath = dataPath,
+                                 #purge = 7,
                                  filename2 = "userGcM3.csv")
 
       message(
@@ -520,6 +524,7 @@ Init <- function(sim) {
       sim$userDist <- prepInputs(url = extractURL("userDist"),
                                  fun = "data.table::fread",
                                  destinationPath = dataPath,
+                                 #purge = 7,
                                  filename2 = "userDist.csv")
     } else {
       sim$userDist <- fread(sim$userDistFile)
