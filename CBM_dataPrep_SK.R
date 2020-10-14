@@ -491,7 +491,7 @@ Init <- function(sim) {
   # 1. growth and yield information
   # userGcM3 and userGcM3File, these files are the m3/ha and age info by growth
   # curve ID, columns should be GrowthCurveComponentID	Age	MerchVolume
-  ## TO DO: add a data manipulation to adjust if the m3 are not given on a yearly basis
+  ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
   if (!suppliedElsewhere("userGcM3", sim)) {
     if (!suppliedElsewhere("userGcM3File", sim)) {
       sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
