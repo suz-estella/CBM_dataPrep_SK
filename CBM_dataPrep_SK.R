@@ -44,7 +44,7 @@ defineModule(sim, list(
       )
     )
   ),
-  inputObjects = bind_rows(
+  inputObjects = bindrows(
     expectsInput(
       objectName = "cbmData", objectClass = "dataset",
       desc = "S4 object created from selective reading in of cbm_default.db in CBM_efaults module",
@@ -125,7 +125,7 @@ defineModule(sim, list(
       sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"
     )
   ),
-  outputObjects = bind_rows(
+  outputObjects = bindrows(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
     createsOutput(
       objectName = "ages", objectClass = "numeric",
