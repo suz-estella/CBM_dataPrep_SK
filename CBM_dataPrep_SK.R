@@ -455,34 +455,7 @@ Init <- function(sim) {
     )
   }
   if (!suppliedElsewhere(sim$pooldef)) {
-    sim$pooldef <- c(
-      "Input",
-      "SoftwoodMerch",
-      "SoftwoodFoliage",
-      "SoftwoodOther",
-      "SoftwoodCoarseRoots",
-      "SoftwoodFineRoots",
-      "HardwoodMerch",
-      "HardwoodFoliage",
-      "HardwoodOther",
-      "HardwoodCoarseRoots",
-      "HardwoodFineRoots",
-      "AboveGroundVeryFastSoil",
-      "BelowGroundVeryFastSoil",
-      "AboveGroundFastSoil",
-      "BelowGroundFastSoil",
-      "MediumSoil",
-      "AboveGroundSlowSoil",
-      "BelowGroundSlowSoil",
-      "SoftwoodStemSnag",
-      "SoftwoodBranchSnag",
-      "HardwoodStemSnag",
-      "HardwoodBranchSnag",
-      "CO2",
-      "CH4",
-      "CO",
-      "Products"
-    )
+    sim$pooldef <- CBMutils::.poolnames
     sim$PoolCount <- length(sim$pooldef)
   }
 
