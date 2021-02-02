@@ -512,8 +512,8 @@ Init <- function(sim) {
       sim$masterRasterURL <- extractURL("masterRaster")
       ## TO DO: why is this
       message(
-        "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).",
-        "masterRaster is going to be read from the default URL given in the inputObjects for",
+        "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
+        "masterRaster is going to be read from the default URL given in the inputObjects for ",
         currentModule(sim)
       )
     }
