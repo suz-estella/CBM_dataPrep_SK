@@ -14,8 +14,8 @@ defineModule(sim, list(
   documentation = list("README.txt", "CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
     "data.table", "fasterize", "magrittr", "raster", "RSQLite", "sf",
-    "CBMutils", # "PredictiveEcology/CBMutils",
-    "PredictiveEcology/LandR"
+    "PredictiveEcology/CBMutils (>= 0.0.6)",
+    "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
     # defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
