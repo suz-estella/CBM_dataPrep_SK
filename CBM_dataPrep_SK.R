@@ -455,7 +455,7 @@ Init <- function(sim) {
     )
   }
   if (!suppliedElsewhere(sim$pooldef)) {
-    sim$pooldef <- CBMutils::.poolnames
+    sim$pooldef <- CBMutils::.pooldef
     sim$PoolCount <- length(sim$pooldef)
   }
 
