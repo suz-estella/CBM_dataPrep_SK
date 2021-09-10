@@ -120,6 +120,11 @@ defineModule(sim, list(
       desc = "URL for masterRaster - optional, need this or a masterRaster"
     ),
     expectsInput(
+      objectName = "allPixDT", objectClass = "data.table",
+      desc = "Data table built for all pixels (incluing NAs) for the four essential raster-based information,
+      growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)"
+    ),
+    expectsInput(
       objectName = "masterRaster", objectClass = "raster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"
@@ -129,7 +134,11 @@ defineModule(sim, list(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
     createsOutput(
       objectName = "ages", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990"
+      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"
+    ),
+    createsOutput(
+      objectName = "realAges", objectClass = "numeric",
+      desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"
     ),
     createsOutput(
       objectName = "nStands", objectClass = "numeric",
@@ -253,67 +262,64 @@ Init <- function(sim) {
     )
   }
 
-  age <- sim$ageRaster
-  gcIndex <- sim$gcIndexRaster
-  spuRaster <- sim$spuRaster # made in the .inputObjects
-  ecoRaster <- sim$ecoRaster # made in the .inputObjects
-  ## End rasters------------------------------------------------------------------
-
-
-  ## Create the data table of all pixels and all values for the study area----------------
-  level2DT <- data.table(
-    spatial_unit_id = spuRaster[], ages = age[], pixelIndex = 1:ncell(age),
-    growth_curve_component_id = gcIndex[], growth_curve_id = gcIndex[],
-    ecozones = ecoRaster[]
-  )
-  # keep only the pixels that have all the information: the pixels that will be simulated
-  level2DT <- level2DT[!is.na(ages) & !is.na(growth_curve_id)]
-  spatialDT <- level2DT
-  ## END data.table of all pixels---------------------------------------------------------
-
+  spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(growth_curve_id),]
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
-  spatialDT <- spatialDT[order(pixelIndex), ]
-  spatialDT$pixelGroup <- LandR::generatePixelGroups(spatialDT,
-    maxPixelGroup = 0,
-    columns = c("ages", "spatial_unit_id", "growth_curve_component_id", "ecozones")
+  setkeyv(spatialDT, "pixelIndex")
+  spatialDT$pixelGroup <- Cache(LandR::generatePixelGroups, spatialDT,
+                                maxPixelGroup = 0,
+                                columns = c("ages", "spatial_unit_id", "growth_curve_component_id", "ecozones")
   )
-  spatialDT <- spatialDT[order(pixelIndex), ]
+  setkeyv(spatialDT, "pixelIndex")
+
   spatialDT <- spatialDT[, .(
     ages, spatial_unit_id, pixelIndex,
     growth_curve_component_id, growth_curve_id, ecozones, pixelGroup
   )]
-  spatialDT <- spatialDT[order(pixelIndex), ]
+  setkeyv(spatialDT, "pixelIndex")
+  # spatialDT <- spatialDT[order(pixelIndex), ]
   sim$spatialDT <- spatialDT
   # end create pixel groups-------------
+
 
 
   ## Data.table for simulations (one row per pixel group)---------------------
   # this table will be the pixel groups that are used in the spinup procedure in
   # the CBM_core spinup event
-  level3DT <- unique(spatialDT[, -("pixelIndex")]) %>% .[order(pixelGroup), ]
+
+  level3DT <- unique(spatialDT[, -("pixelIndex")])
+  setkeyv(level3DT, "pixelGroup")
+
+  sim$curveID <- c("growth_curve_component_id", "ecozones") # "id_ecozone" # TODO: add to metadata -- use in multiple modules
+  curveID <- sim$curveID
+  sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
+  set(level3DT, NULL, "gcids", sim$gcids)
   sim$level3DT <- level3DT
+
   ## End data.table for simulations-------------------------------------------
 
-
+  ###HERE
   ## TODO: problem with ages<=1
   ##################################################### # SK example: can't seem
-  #to solve why growth curve id 52 (white birch, good # productivity) will not
-  #run with ages= c(0,1,2) it gets stuck in the spinup. Tried ages==1, # and
-  #ages==2. Maybe because the first few years of growth are 0 ? (to check) it #
-  #does not grow and it does not fill-up the soil pools. # Notes: the GAMs are
-  #fit on the cumulative curves of carbon/ha for three # pools. This is to make
-  #sure the curves go through 0...but maybe it would # work better for GAMs to
-  #be fit on the increments (?). # since all growth curves are for merchantible
-  #timber (with diameter limits), it is acceptable to start all increments at
-  #the level of year==3.
+  # in SK: to solve why growth curve id 52 (white birch, good # productivity) will not
+  #run with ages= c(0,1,2) it gets stuck in the spinup need to set ages to 3. Tried ages==1, and
+  #ages==2. Maybe because the first few years of growth are 0 ? (to check) it
+  #does not grow and it does not fill-up the soil pools.
   #work for this problem for most curves for now: this is from SK runs
   #sim$level3DT[ages==0 & growth_curve_component_id==52,ages:=3]
- ######################################
-  ##################### temp fix should
+  #sim$level3DT[ages <= 1, ages := 3]
+  # in RIA: won't run for ages 0 or 1 with growth 0, had to change it to two
+  # realAges are used to restore the correct ages in CBM_core postspinup event
+  ######################################
+  ## TOOLS TO DEBUG C++ Spinup() fnct
+  #level3DT <- level3DT[ages>0,]
 
+  sim$realAges <- sim$level3DT[, ages]
   sim$level3DT[ages <= 1, ages := 3]
-  sim$level3DT[order(pixelGroup), ]
+  ## TOOLS TO DEBUG C++ Spinup() fnct
+  #sim$gcids <- sim$level3DT$gcids
+
+  setorderv(sim$level3DT, "pixelGroup")
 
   ## Creating all the vectors for the spinup --------------------------------
   sim$ages <- sim$level3DT[, ages]
@@ -321,7 +327,6 @@ Init <- function(sim) {
   sim$pools <- matrix(ncol = sim$PoolCount, nrow = sim$nStands, data = 0)
   colnames(sim$pools) <- sim$pooldef
   sim$pools[, "Input"] <- rep(1.0, nrow(sim$pools))
-  sim$gcids <- sim$level3DT[, growth_curve_component_id]
   sim$delays <- rep.int(0, sim$nStands)
   sim$minRotations <- rep.int(10, sim$nStands)
   sim$maxRotations <- rep.int(30, sim$nStands)
@@ -376,7 +381,7 @@ Init <- function(sim) {
 
   for (i in 1:length(mySpuDmids$distName)) {
     ### DANGER HARD CODED FIXES
-    ## to do: present the user with options that live in listDist for the
+    ## TODO: present the user with options that live in listDist for the
     ## specific spu or in sim$cbmData@disturbanceMatrix
     if (mySpuDmids$distName[i] == "clearcut") {
       dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
@@ -387,7 +392,7 @@ Init <- function(sim) {
     }
   }
 
-  ## bunch of warnings here...
+  ## this creates a bunch of warnings here...
   mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
   names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
   sim$mySpuDmids <- mySpuDmids
@@ -395,7 +400,7 @@ Init <- function(sim) {
   # DECISION: both the last pass and the historic disturbance will be the same
   # for these runs
 
-  ## TO DO: in Canada historic DMIDs will always be fire, but the last past may
+  ## TODO: in Canada historic DMIDs will always be fire, but the last past may
   ## not, it could be harvest. Make this optional and give the user a message
   ## saying these are the defaults.
 
@@ -409,7 +414,7 @@ Init <- function(sim) {
   # this is mainly to make them the same length at the number of pixel groups
   histLastDMIDs <- merge(sim$level3DT, myFires)
   sim$historicDMIDs <- histLastDMIDs$disturbance_matrix_id
-  ## TO DO: this is where it could be something else then fire
+  ## TODO: this is where it could be something else then fire
   sim$lastPassDMIDS <- histLastDMIDs$disturbance_matrix_id
 
   # ! ----- STOP EDITING ----- ! #
@@ -459,7 +464,7 @@ Init <- function(sim) {
     sim$PoolCount <- length(sim$pooldef)
   }
 
-  # user provided data tables------------------------------------------------------
+  # user provided data tables (3)------------------------------------------------------
 
   # 1. growth and yield information
   # userGcM3 and userGcM3File, these files are the m3/ha and age info by growth
@@ -504,7 +509,27 @@ Init <- function(sim) {
     }
   }
 
+  # 3. cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
+  # for the SK simulations, this info is provided directly as a raster (raster
+  # #4 below)
+  # if (!suppliedElsewhere("cbmAdmin", sim)) {
+  #   sim$cbmAdmin <- fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
+  # }
+
+  # END user provided data tables (3)------------------------------------------------------
+
   # user provided rasters or spatial information------------------------
+
+  ## Rasters
+  ## user provides raster to match (masterRaster) which is a raster for the
+  ## study area, it will define the crs etc, for all other layers. The user also
+  ## provides age raster, and a raster linking each growth curve to pixels (gcIndex).
+  ## Using the masterRaster, the ecozone raster is made (Canadian ecozones) and the
+  ## spatial unit raster. The spatial units are a CBM-CFS3 specific location
+  ## that is the intersection of the ecozones and administrative boundaries.
+  ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
+  ## parameters to the right location (example: decomposition rates).
+  ##
 
   # 1. Raster to match (masterRaster). This is the study area.
   if (!suppliedElsewhere("masterRaster", sim)) {
@@ -537,7 +562,7 @@ Init <- function(sim) {
                            fun = "raster::raster",
                            destinationPath = dataPath
     )
-    ## TO DO: put in a message to out pointing out the max age (this has to be
+    ## TODO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
     # maxAge <- max(sim$ageRaster)
     # message(max age on the raster is XX)
@@ -558,16 +583,22 @@ Init <- function(sim) {
   # out what CBM-specific spatial units each pixels. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
-    canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
+    canadaSpu <- Cache(prepInputs,
+                            targetFile = "spUnit_Locator.shp",
                             url = "https://drive.google.com/file/d/145DuiwA3fat-9q0qQNJ_RqbnpOEQglfc",
                             destinationPath = dataPath,
                             alsoExtract = "similar")
-    spuShp <- postProcess(canadaSpu,
+    spuShp <- Cache(postProcess,
+                          canadaSpu,
                           rasterToMatch = sim$masterRaster,
                           targetCRS = crs(sim$masterRaster),
                           useCache = FALSE, filename2 = NULL
     )
-    sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
+    sim$spuRaster <- Cache(
+                          fasterize::fasterize,
+                          sf::st_as_sf(spuShp),
+                          raster = sim$masterRaster,
+                          field = "spu_id")
   }
 
   # 5. Ecozone raster. This takes the masterRaster (study area) and figures
@@ -590,10 +621,29 @@ Init <- function(sim) {
     )
   }
 
+  dtRasters <- as.data.table(cbind(growth_curve_component_id = sim$gcIndexRaster[],
+                                   ages = sim$ageRaster[],
+                                   ecozones = sim$ecoRaster[],
+                                   spatialUnitID = sim$spuRaster[])
+                             )
+
+
+  # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
+  if (isTRUE(P(sim)$doAssertions)) {
+    bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
+    if (!all(names(table(bbb)) %in% c("0", "4")))
+      stop("should be only 0 or 4s")
+  }
+
+
+  sim$allPixDT <- as.data.table(cbind(dtRasters,
+                                      pixelIndex = 1:ncell(sim$gcIndexRaster),
+                                      growth_curve_id = sim$gcIndexRaster[]))
+
   # 6. Disturbance rasters. The default example is a list of rasters, one for
   # each year. But these can be provided by another family of modules in the
   # annual event.
-  ### TO DO: add a message if no information is provided asking the user if
+  ### TODO: add a message if no information is provided asking the user if
   ### disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
     ### Why is this failing??
