@@ -36,7 +36,7 @@ defineModule(sim, list(
       "This describes the simulation time interval between save events"
     ),
     defineParameter(
-      ".useCache", "logical", FALSE, NA, NA,
+      ".useCache", "logical", TRUE, NA, NA,
       paste(
         "Should this entire module be run with caching activated?",
         "This is generally intended for data-type modules,",
@@ -132,6 +132,8 @@ defineModule(sim, list(
   ),
   outputObjects = bindrows(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
+    createsOutput(objectName = "curveID", objectClass = "character",
+                  desc = "Vector of column names that together, uniquely define growth curve id"),
     createsOutput(
       objectName = "ages", objectClass = "numeric",
       desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"
@@ -242,6 +244,7 @@ Init <- function(sim) {
   ## that is the intersection of the ecozones and administrative boundaries.
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
+
   ##
 
   io <- inputObjects(sim, currentModule(sim))
@@ -251,6 +254,7 @@ Init <- function(sim) {
   ## TODO: these aren't required
   omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3File"))
   available <- available[-omit]
+  objectNamesExpected <- objectNamesExpected[-omit]
 
   if (any(!available)) {
     stop(
@@ -289,8 +293,10 @@ Init <- function(sim) {
 
   level3DT <- unique(spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
-
-  sim$curveID <- c("growth_curve_component_id", "ecozones") # "id_ecozone" # TODO: add to metadata -- use in multiple modules
+  # in the SK runs, each pixels has a unique growth curve, the ecozone does not
+  # change the parameters (they do in other project likes the RIA). So only one
+  # column is needed for creating the $gcids as a factor
+  sim$curveID <- c("growth_curve_component_id") #, "ecozones" # "id_ecozone" # TODO: add to metadata -- use in multiple modules
   curveID <- sim$curveID
   sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
   set(level3DT, NULL, "gcids", sim$gcids)
@@ -330,7 +336,13 @@ Init <- function(sim) {
   sim$delays <- rep.int(0, sim$nStands)
   sim$minRotations <- rep.int(10, sim$nStands)
   sim$maxRotations <- rep.int(30, sim$nStands)
-  retInt <- merge(sim$level3DT[, ], sim$cbmData@spinupParameters[, c(1, 2)], by = "spatial_unit_id", all.x = TRUE) %>% .[order(pixelGroup)]
+  setkeyv(sim$level3DT, "spatial_unit_id")
+  spinupParameters <- as.data.table(sim$cbmData@spinupParameters[, c(1, 2)])
+  setkeyv(spinupParameters,"spatial_unit_id")
+  retInt <- merge.data.table(sim$level3DT, spinupParameters,
+                             by = "spatial_unit_id", all.x = TRUE)
+  setkeyv(retInt, "pixelGroup")
+  setkeyv(sim$level3DT, "pixelGroup")
   sim$returnIntervals <- retInt[, "return_interval"]
   sim$spatialUnits <- sim$level3DT[, spatial_unit_id]
   sim$ecozones <- sim$level3DT$ecozones
@@ -628,17 +640,23 @@ Init <- function(sim) {
                              )
 
 
-  # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
+  # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
   if (isTRUE(P(sim)$doAssertions)) {
     bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
     if (!all(names(table(bbb)) %in% c("0", "4")))
       stop("should be only 0 or 4s")
   }
 
+  ## There seems to be a caching problem here, the name adjustments
 
+  ##
   sim$allPixDT <- as.data.table(cbind(dtRasters,
                                       pixelIndex = 1:ncell(sim$gcIndexRaster),
                                       growth_curve_id = sim$gcIndexRaster[]))
+
+
+  setnames(sim$allPixDT,"spatialUnitID", "spatial_unit_id")
+
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for
   # each year. But these can be provided by another family of modules in the
