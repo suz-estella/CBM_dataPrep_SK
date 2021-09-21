@@ -384,10 +384,11 @@ Init <- function(sim) {
   # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
   distName <- c(rep(userDist$distName, length(spu)))
-  rasterId <- c(rep(userDist$rasterId, length(spu)))
+  rasterID <- c(rep(userDist$rasterID, length(spu)))
   wholeStand <- c(rep(userDist$wholeStand, length(spu)))
   spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
-  mySpuDmids <- data.table(distName, rasterId, spatial_unit_id, wholeStand)
+
+  mySpuDmids <- data.table(distName, rasterID, spatial_unit_id, wholeStand)
 
   dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
 
@@ -406,7 +407,7 @@ Init <- function(sim) {
 
   ## this creates a bunch of warnings here...
   mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-  names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
+  names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
   sim$mySpuDmids <- mySpuDmids
   # need to match the historic and last past dist to the spatial unit
   # DECISION: both the last pass and the historic disturbance will be the same
