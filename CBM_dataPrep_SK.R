@@ -664,14 +664,18 @@ Init <- function(sim) {
   ### TODO: add a message if no information is provided asking the user if
   ### disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
+    ## TODO: make this work with URL
     ### Why is this failing??
-    # distHere <- extractURL(disturbanceRasters)
-    # sim$disturbanceRasters <- list.files(distHere,full.names = TRUE) %>%
-    #   grep(., pattern = ".grd$", value = TRUE)
+    #
+    # sim$disturbanceRasters <- prepInputs(url = extractURL("disturbanceRasters"),
+    #                                      destinationPath = dataPath
+    #                                      )
+    #distHere <- extractURL("disturbanceRasters")
+    #sim$disturbanceRasters <- list.files(distHere,
+    #                                     full.names = TRUE) %>% grep(., pattern = ".grd$", value = TRUE)
     # # if all fails
-
-    #prepInputs(url = extractURL(disturbanceRasters), destinationPath = dataPath) TODO: not working
-
+    ## download the data from the URL and put is in the disturbance_testArea folder in the module data folder (dataPath)
+    ## read it in
     sim$disturbanceRasters <- list.files(file.path(dataPath, "disturbance_testArea"), ## TODO: don't hardcode
       full.names = TRUE
     ) %>%
