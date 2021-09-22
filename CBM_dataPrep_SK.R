@@ -516,6 +516,7 @@ Init <- function(sim) {
                                  fun = "data.table::fread",
                                  destinationPath = dataPath,
                                  #purge = 7,
+                                 targetFile = "userDist.csv",
                                  filename2 = "userDist.csv")
     } else {
       sim$userDist <- fread(sim$userDistFile)
