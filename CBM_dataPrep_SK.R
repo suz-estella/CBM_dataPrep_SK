@@ -384,7 +384,7 @@ Init <- function(sim) {
   # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
   distName <- c(rep(userDist$distName, length(spu)))
-  rasterID <- c(rep(userDist$rasterID, length(spu)))
+  rasterID <- c(rep(userDist$rasterId, length(spu)))
   wholeStand <- c(rep(userDist$wholeStand, length(spu)))
   spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
 
