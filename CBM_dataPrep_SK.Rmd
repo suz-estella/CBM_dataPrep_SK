@@ -61,19 +61,19 @@ parameters <- list(
  #module1 = list(param1 = value1, param2 = value2),
  #module2 = list(param1 = value1, param2 = value2)
  )
-modules <- list("CBM_dataPrep")
+modules <- list("CBM_dataPrep_SK")
 objects <- list(
-  userDistFile = file.path(moduleDir,"CBM_dataPrep","data","userDist.csv")
+  userDistFile = file.path(moduleDir, "CBM_dataPrep_SK", "data", "userDist.csv")
 )
 paths <- list(
- cachePath = cacheDir,
- modulePath = moduleDir,
- inputPath = inputDir,
- outputPath = outputDir
- )
+  cachePath = cacheDir,
+  modulePath = moduleDir,
+  inputPath = inputDir,
+  outputPath = outputDir
+)
 
 myInputs <- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects, paths = paths)
+                    objects = objects, paths = paths)
 
 outInputs <- spades(myInputs)
 ```
@@ -83,6 +83,13 @@ outInputs <- spades(myInputs)
 There is only when event (init) is this module.
 
 # Data dependencies
+
+## Module parameters
+
+```{r moduleParams, echo = FALSE, eval = TRUE}
+df_params <- SpaDES.core::moduleParams("CBM_dataPrep_SK", "..")
+knitr::kable(df_params)
+```
 
 ## Input data
 

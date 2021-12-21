@@ -122,8 +122,8 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "allPixDT", objectClass = "data.table",
-      desc = "Data table built for all pixels (incluing NAs) for the four essential raster-based information,
-      growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)"
+      desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
+                   "growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)")
     ),
     expectsInput(
       objectName = "masterRaster", objectClass = "raster",
@@ -245,7 +245,6 @@ Init <- function(sim) {
   ## that is the intersection of the ecozones and administrative boundaries.
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
-
   ##
 
   io <- inputObjects(sim, currentModule(sim))

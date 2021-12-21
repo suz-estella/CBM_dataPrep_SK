@@ -60,19 +60,19 @@ parameters <- list(
  #module1 = list(param1 = value1, param2 = value2),
  #module2 = list(param1 = value1, param2 = value2)
  )
-modules <- list("CBM_dataPrep")
+modules <- list("CBM_dataPrep_SK")
 objects <- list(
-  userDistFile = file.path(moduleDir,"CBM_dataPrep","data","userDist.csv")
+  userDistFile = file.path(moduleDir, "CBM_dataPrep_SK", "data", "userDist.csv")
 )
 paths <- list(
- cachePath = cacheDir,
- modulePath = moduleDir,
- inputPath = inputDir,
- outputPath = outputDir
- )
+  cachePath = cacheDir,
+  modulePath = moduleDir,
+  inputPath = inputDir,
+  outputPath = outputDir
+)
 
 myInputs <- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects, paths = paths)
+                    objects = objects, paths = paths)
 
 outInputs <- spades(myInputs)
 ```
@@ -82,6 +82,17 @@ outInputs <- spades(myInputs)
 There is only when event (init) is this module.
 
 # Data dependencies
+
+## Module parameters
+
+
+|paramName        |paramClass |default |min |max |paramDesc                                                                                                                                                |
+|:----------------|:----------|:-------|:---|:---|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
+|.plotInitialTime |numeric    |NA      |NA  |NA  |This describes the simulation time at which the first plot event should occur                                                                            |
+|.plotInterval    |numeric    |NA      |NA  |NA  |This describes the simulation time interval between plot events                                                                                          |
+|.saveInitialTime |numeric    |NA      |NA  |NA  |This describes the simulation time at which the first save event should occur                                                                            |
+|.saveInterval    |numeric    |NA      |NA  |NA  |This describes the simulation time interval between save events                                                                                          |
+|.useCache        |logical    |TRUE    |NA  |NA  |Should this entire module be run with caching activated? This is generally intended for data-type modules, where stochasticity and time are not relevant |
 
 ## Input data
 

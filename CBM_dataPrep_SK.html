@@ -196,19 +196,19 @@ parameters &lt;- list(
  #module1 = list(param1 = value1, param2 = value2),
  #module2 = list(param1 = value1, param2 = value2)
  )
-modules &lt;- list(&quot;CBM_dataPrep&quot;)
+modules &lt;- list(&quot;CBM_dataPrep_SK&quot;)
 objects &lt;- list(
-  userDistFile = file.path(moduleDir,&quot;CBM_dataPrep&quot;,&quot;data&quot;,&quot;userDist.csv&quot;)
+  userDistFile = file.path(moduleDir, &quot;CBM_dataPrep_SK&quot;, &quot;data&quot;, &quot;userDist.csv&quot;)
 )
 paths &lt;- list(
- cachePath = cacheDir,
- modulePath = moduleDir,
- inputPath = inputDir,
- outputPath = outputDir
- )
+  cachePath = cacheDir,
+  modulePath = moduleDir,
+  inputPath = inputDir,
+  outputPath = outputDir
+)
 
 myInputs &lt;- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects, paths = paths)
+                    objects = objects, paths = paths)
 
 outInputs &lt;- spades(myInputs)</code></pre>
 </div>
@@ -218,6 +218,71 @@ outInputs &lt;- spades(myInputs)</code></pre>
 </div>
 <div id="data-dependencies" class="section level1">
 <h1>Data dependencies</h1>
+<div id="module-parameters" class="section level2">
+<h2>Module parameters</h2>
+<table>
+<colgroup>
+<col width="8%" />
+<col width="5%" />
+<col width="4%" />
+<col width="2%" />
+<col width="2%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">paramName</th>
+<th align="left">paramClass</th>
+<th align="left">default</th>
+<th align="left">min</th>
+<th align="left">max</th>
+<th align="left">paramDesc</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">.plotInitialTime</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">This describes the simulation time at which the first plot event should occur</td>
+</tr>
+<tr class="even">
+<td align="left">.plotInterval</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">This describes the simulation time interval between plot events</td>
+</tr>
+<tr class="odd">
+<td align="left">.saveInitialTime</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">This describes the simulation time at which the first save event should occur</td>
+</tr>
+<tr class="even">
+<td align="left">.saveInterval</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">This describes the simulation time interval between save events</td>
+</tr>
+<tr class="odd">
+<td align="left">.useCache</td>
+<td align="left">logical</td>
+<td align="left">TRUE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Should this entire module be run with caching activated? This is generally intended for data-type modules, where stochasticity and time are not relevant</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div id="input-data" class="section level2">
 <h2>Input data</h2>
 <table>
