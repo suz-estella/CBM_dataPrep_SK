@@ -72,7 +72,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
-      sourceURL = "https://drive.google.com/file/d/1Tsm1a1HJr8DIxLURqc9vb1Qis-TK56Xh"
+      sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH/edit?usp=share_link&ouid=108246386320559871010&rtpof=true&sd=true"
     ),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
