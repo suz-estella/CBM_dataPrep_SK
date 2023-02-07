@@ -14,7 +14,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
-    "data.table", "fasterize", "magrittr", "raster", "RSQLite", "sf",
+    "data.table", "terra","fasterize", "magrittr", "raster", "RSQLite", "sf",
     "PredictiveEcology/CBMutils (>= 0.0.6)",
     "PredictiveEcology/LandR@development"
   ),
@@ -296,8 +296,17 @@ Init <- function(sim) {
   # in the SK runs, each pixels has a unique growth curve, the ecozone does not
   # change the parameters (they do in other project likes the RIA). So only one
   # column is needed for creating the $gcids as a factor
-  sim$curveID <- c("growth_curve_component_id") #, "ecozones" # "id_ecozone" # TODO: add to metadata -- use in multiple modules
+  sim$curveID <- c("growth_curve_component_id") #, "ecozones" # "id_ecozone"
+  ##TODO: add to metadata -- use in multiple modules
   curveID <- sim$curveID
+
+  ##TODO CBMutils::gcidsCreate
+  # Error: 'gcidsCreate' is not an exported object from 'namespace:CBMutils'
+  # work around until Alex can fix it, putting this in global
+  # gcidsCreate <- function(...) {
+  #   do.call(paste, c(list(...)[[1]], sep= "_"))
+  # }
+
   sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
   set(level3DT, NULL, "gcids", sim$gcids)
   sim$level3DT <- level3DT
@@ -384,7 +393,7 @@ Init <- function(sim) {
   # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
   distName <- c(rep(userDist$distName, length(spu)))
-  rasterID <- c(rep(userDist$rasterId, length(spu)))
+  rasterID <- c(rep(userDist$rasterID, length(spu)))
   wholeStand <- c(rep(userDist$wholeStand, length(spu)))
   spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
 
@@ -545,6 +554,8 @@ Init <- function(sim) {
   ## parameters to the right location (example: decomposition rates).
   ##
 
+  ## Jan 2023 addition from Eliot from Zulip R-help
+  options("reproducible.useTerra" = TRUE)
   # 1. Raster to match (masterRaster). This is the study area.
   if (!suppliedElsewhere("masterRaster", sim)) {
     if (!suppliedElsewhere("masterRasterURL", sim)) {
@@ -559,7 +570,7 @@ Init <- function(sim) {
     sim$masterRaster <- Cache(
       prepInputs,
       url = sim$masterRasterURL,
-      fun = "raster::raster",
+      fun = "terra::rast",
       destinationPath = dataPath
     )
 
@@ -573,7 +584,7 @@ Init <- function(sim) {
     }
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
-                           fun = "raster::raster",
+                           fun = "terra::rast",
                            destinationPath = dataPath
     )
     ## TODO: put in a message to out pointing out the max age (this has to be
@@ -589,7 +600,7 @@ Init <- function(sim) {
     }
     sim$gcIndexRaster <- Cache(prepInputs,
                                url = sim$gcIndexRasterURL,
-                               fun = "raster::raster",
+                               fun = "terra::rast",
                                destinationPath = dataPath)
   }
 
@@ -597,22 +608,23 @@ Init <- function(sim) {
   # out what CBM-specific spatial units each pixels. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
+
     canadaSpu <- Cache(prepInputs,
                             targetFile = "spUnit_Locator.shp",
-                            url = "https://drive.google.com/file/d/145DuiwA3fat-9q0qQNJ_RqbnpOEQglfc",
+                            url = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed",
                             destinationPath = dataPath,
                             alsoExtract = "similar")
+
     spuShp <- Cache(postProcess,
                           canadaSpu,
                           rasterToMatch = sim$masterRaster,
-                          targetCRS = crs(sim$masterRaster),
+                          #targetCRS = terra::crs(sim$masterRaster),
                           useCache = FALSE, filename2 = NULL
-    )
-    sim$spuRaster <- Cache(
-                          fasterize::fasterize,
-                          sf::st_as_sf(spuShp),
-                          raster = sim$masterRaster,
-                          field = "spu_id")
+    ) |> st_collection_extract("POLYGON")
+
+    sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
+                                      terra::rast(sim$masterRaster),
+                                      field = "spu_id") |> raster::raster()
   }
 
   # 5. Ecozone raster. This takes the masterRaster (study area) and figures
@@ -624,13 +636,12 @@ Init <- function(sim) {
       alsoExtract = "similar",
       destinationPath = dataPath,
       rasterToMatch = sim$masterRaster,
-      overwrite = TRUE,
-      fun = "raster::shapefile",
-      filename2 = TRUE
-    ) %>%
-      cropInputs(., rasterToMatch = sim$masterRaster)
-    sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
-      raster = sim$masterRaster,
+      overwrite = TRUE
+      #fun = "terra::vect"
+      #filename2 = TRUE
+    ) ##ecozones is now an sf class objects
+    sim$ecoRaster <- terra::rasterize(ecozones,
+      sim$masterRaster,
       field = "ECOZONE"
     )
   }
@@ -656,8 +667,9 @@ Init <- function(sim) {
                                       pixelIndex = 1:ncell(sim$gcIndexRaster),
                                       growth_curve_id = sim$gcIndexRaster[]))
 
-
-  setnames(sim$allPixDT,"spatialUnitID", "spatial_unit_id")
+  chgNamesTo <- c("growth_curve_component_id", "ages", "ecozones", "spatial_unit_id",
+                  "pixelIndex", "growth_curve_id")
+  setnames(sim$allPixDT,names(sim$allPixDT),chgNamesTo)
 
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for
@@ -678,6 +690,13 @@ Init <- function(sim) {
     # # if all fails
     ## download the data from the URL and put is in the disturbance_testArea folder in the module data folder (dataPath)
     ## read it in
+
+    ##TODO these disturbance files are available here
+    ##https://drive.google.com/drive/folders/1qMw-7nmH1yMkXquK4UpuQApT6hGpbsoB?usp=share_link
+    ##we need to modify the code below so that the files times around these are
+    ##downloaded to a local folder that can be access on the annual cycle
+    ##(CBM_core). For now, these were manually copied.
+
     sim$disturbanceRasters <- list.files(file.path(dataPath, "disturbance_testArea"), ## TODO: don't hardcode
       full.names = TRUE
     ) %>%
