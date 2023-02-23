@@ -1,6 +1,6 @@
 defineModule(sim, list(
   name = "CBM_dataPrep_SK",
-  description = "A data preparation module to format and prepare user-provided input to the SpaDES forest-carbon modelling familly.",
+  description = "A data preparation module to format and prepare user-provided input to the SpaDES forest-carbon modelling family.",
   keywords = NA,
   authors = c(
     person("Celine", "Boisvenue", email = "Celine.Boisvenue@nrcan-rncan.gc.ca", role = c("aut", "cre")),
@@ -212,20 +212,6 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       # schedule future event(s)
       sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_SK", "save")
     },
-    save = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "CBM_dataPrep_SK", "save")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
     warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
       "' in module '", current(sim)[1, "moduleName", with = FALSE], "'",
       sep = ""
@@ -233,7 +219,6 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
   )
   return(invisible(sim))
 }
-
 
 Init <- function(sim) {
   ## Rasters----------------------------------------------------------------------
