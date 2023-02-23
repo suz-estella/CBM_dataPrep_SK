@@ -431,17 +431,17 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
-  dataPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
-  message(currentModule(sim), ": using dataPath '", dataPath, "'.")
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # if we chose to not use the RSQLite library in this module, and extract
   # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
   # then $sqlDir and $dbPath are not needed.
   if (!suppliedElsewhere(sim$sqlDir)) {
-    sim$sqlDir <- file.path(dataPath, "cbm_defaults")
+    sim$sqlDir <- file.path(dPath, "cbm_defaults")
   }
   if (!suppliedElsewhere(sim$dbPath)) {
-    sim$dbPath <- file.path(dataPath, "cbm_defaults", "cbm_defaults.db")
+    sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db")
   }
 
   if (!suppliedElsewhere(sim$cbmData)) {
@@ -481,7 +481,7 @@ Init <- function(sim) {
     if (!suppliedElsewhere("userGcM3File", sim)) {
       sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
                                  fun = "data.table::fread",
-                                 destinationPath = dataPath,
+                                 destinationPath = dPath,
                                  #purge = 7,
                                  filename2 = "userGcM3.csv")
 
@@ -508,7 +508,7 @@ Init <- function(sim) {
       # warning("Default disturbances will be used. They are fire and clearcut, assigned raster values of 1 and 2 respectively.")
       sim$userDist <- prepInputs(url = extractURL("userDist"),
                                  fun = "data.table::fread",
-                                 destinationPath = dataPath,
+                                 destinationPath = dPath,
                                  #purge = 7,
                                  targetFile = "userDist.csv",
                                  filename2 = "userDist.csv")
@@ -556,7 +556,7 @@ Init <- function(sim) {
       prepInputs,
       url = sim$masterRasterURL,
       fun = "terra::rast",
-      destinationPath = dataPath
+      destinationPath = dPath
     )
 
     sim$masterRaster[sim$masterRaster == 0] <- NA
@@ -570,7 +570,7 @@ Init <- function(sim) {
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
                            fun = "terra::rast",
-                           destinationPath = dataPath
+                           destinationPath = dPath
     )
     ## TODO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
@@ -586,7 +586,7 @@ Init <- function(sim) {
     sim$gcIndexRaster <- Cache(prepInputs,
                                url = sim$gcIndexRasterURL,
                                fun = "terra::rast",
-                               destinationPath = dataPath)
+                               destinationPath = dPath)
   }
 
   # 4. Spatial Unit raster. This takes the masterRaster (study area) and figures
@@ -597,7 +597,7 @@ Init <- function(sim) {
     canadaSpu <- Cache(prepInputs,
                             targetFile = "spUnit_Locator.shp",
                             url = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed",
-                            destinationPath = dataPath,
+                            destinationPath = dPath,
                             alsoExtract = "similar")
 
     spuShp <- Cache(postProcess,
@@ -619,7 +619,7 @@ Init <- function(sim) {
     ecozones <- prepInputs(
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
-      destinationPath = dataPath,
+      destinationPath = dPath,
       rasterToMatch = sim$masterRaster,
       overwrite = TRUE
       #fun = "terra::vect"
@@ -673,7 +673,7 @@ Init <- function(sim) {
     #sim$disturbanceRasters <- list.files(distHere,
     #                                     full.names = TRUE) %>% grep(., pattern = ".grd$", value = TRUE)
     # # if all fails
-    ## download the data from the URL and put is in the disturbance_testArea folder in the module data folder (dataPath)
+    ## download the data from the URL and put is in the disturbance_testArea folder in the module data folder (dPath)
     ## read it in
 
     ##TODO these disturbance files are available here
@@ -682,7 +682,7 @@ Init <- function(sim) {
     ##downloaded to a local folder that can be access on the annual cycle
     ##(CBM_core). For now, these were manually copied.
 
-    sim$disturbanceRasters <- list.files(file.path(dataPath, "disturbance_testArea"), ## TODO: don't hardcode
+    sim$disturbanceRasters <- list.files(file.path(dPath, "disturbance_testArea"), ## TODO: don't hardcode
       full.names = TRUE
     ) %>%
       grep(., pattern = ".grd$", value = TRUE)
