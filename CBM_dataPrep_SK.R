@@ -115,6 +115,7 @@ defineModule(sim, list(
       objectName = "disturbanceRasters", objectClass = "vector",
       desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
       sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
+      ## user-navigable here: https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
@@ -656,36 +657,22 @@ Init <- function(sim) {
                   "pixelIndex", "growth_curve_id")
   setnames(sim$allPixDT,names(sim$allPixDT),chgNamesTo)
 
+  # 6. Disturbance rasters. The default example is a list of rasters, one for each year.
+  #    But these can be provided by another family of modules in the annual event.
 
-  # 6. Disturbance rasters. The default example is a list of rasters, one for
-  # each year. But these can be provided by another family of modules in the
-  # annual event.
-  ### TODO: add a message if no information is provided asking the user if
-  ### disturbances will be provided on a yearly basis.
+  ## TODO: add a message if no information is provided asking the user if
+  ## disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
-    ## TODO: make this work with URL
-    ### Why is this failing??
-    #
-    # sim$disturbanceRasters <- prepInputs(url = extractURL("disturbanceRasters"),
-    #                                      destinationPath = dataPath
-    #                                      )
-    #distHere <- extractURL("disturbanceRasters")
-    #sim$disturbanceRasters <- list.files(distHere,
-    #                                     full.names = TRUE) %>% grep(., pattern = ".grd$", value = TRUE)
-    # # if all fails
-    ## download the data from the URL and put is in the disturbance_testArea folder in the module data folder (dPath)
-    ## read it in
+    ## download the data and identify the .grd files present
+    out <- preProcess(url = extractURL("disturbanceRasters"),
+                      destinationPath = file.path(dPath, "disturbance_testArea"),
+                      filename1 = "disturbance_testArea.zip")
 
-    ##TODO these disturbance files are available here
-    ##https://drive.google.com/drive/folders/1qMw-7nmH1yMkXquK4UpuQApT6hGpbsoB?usp=share_link
-    ##we need to modify the code below so that the files times around these are
-    ##downloaded to a local folder that can be access on the annual cycle
-    ##(CBM_core). For now, these were manually copied.
-
-    sim$disturbanceRasters <- list.files(file.path(dPath, "disturbance_testArea"), ## TODO: don't hardcode
+    sim$disturbanceRasters <- list.files(
+      file.path(dPath, "disturbance_testArea"),
+      pattern = "[.]grd$",
       full.names = TRUE
-    ) %>%
-      grep(., pattern = ".grd$", value = TRUE)
+    )
   }
 
   stopifnot(length(sim$disturbanceRasters) > 0)
