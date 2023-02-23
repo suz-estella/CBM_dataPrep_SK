@@ -330,7 +330,7 @@ Init <- function(sim) {
   #level3DT <- level3DT[ages>0,]
 
   sim$realAges <- sim$level3DT[, ages]
-  sim$level3DT[ages <= 1, ages := 3]
+  sim$level3DT[ages <= 3, ages := 3]
   ## TOOLS TO DEBUG C++ Spinup() fnct
   #sim$gcids <- sim$level3DT$gcids
 
