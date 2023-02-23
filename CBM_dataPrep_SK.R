@@ -134,8 +134,10 @@ defineModule(sim, list(
   ),
   outputObjects = bindrows(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
-    createsOutput(objectName = "curveID", objectClass = "character",
-                  desc = "Vector of column names that together, uniquely define growth curve id"),
+    createsOutput(
+      objectName = "curveID", objectClass = "character",
+      desc = "Vector of column names that together, uniquely define growth curve id"
+    ),
     createsOutput(
       objectName = "ages", objectClass = "numeric",
       desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"
@@ -150,15 +152,15 @@ defineModule(sim, list(
     ),
     createsOutput(
       objectName = "gcids", objectClass = "numeric",
-      desc = "The identification of which growth curves to use on the specific stands provided by..."
+      desc = "The identification of which growth curves to use on the specific stands provided by the user."
     ),
     createsOutput(
       objectName = "historicDMIDs", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating historical disturbance type, linked to the S4 table called cbmData. Only Spinup."
+      desc = "Vector, one for each stand, indicating historical disturbance type, linked to the S4 table called `cbmData`. Only Spinup."
     ),
     createsOutput(
       objectName = "lastPassDMIDS", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating final disturbance type, linked to the S4 table called cbmData. Only Spinup."
+      desc = "Vector, one for each stand, indicating final disturbance type, linked to the S4 table called `cbmData`. Only Spinup."
     ),
     createsOutput(
       objectName = "delays", objectClass = "numeric",
@@ -182,7 +184,8 @@ defineModule(sim, list(
     ),
     createsOutput(
       objectName = "ecozones", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating the numeric represenation of the Canadian ecozones, as used in CBM-CFS3"
+      desc = paste("Vector, one for each stand, indicating the numeric representation",
+                   "of the Canadian ecozones, as used in CBM-CFS3")
     ),
     createsOutput(
       objectName = "level3DT", objectClass = "data.table",
