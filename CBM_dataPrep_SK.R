@@ -444,6 +444,7 @@ Init <- function(sim) {
   if (!suppliedElsewhere(sim$sqlDir)) {
     sim$sqlDir <- file.path(dPath, "cbm_defaults")
   }
+
   if (!suppliedElsewhere(sim$dbPath)) {
     sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db")
   }
