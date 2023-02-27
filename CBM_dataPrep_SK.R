@@ -72,7 +72,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
-      sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH/edit?usp=share_link&ouid=108246386320559871010&rtpof=true&sd=true"
+      sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH"
     ),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
@@ -499,6 +499,7 @@ Init <- function(sim) {
     }
     names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
   }
+
   # 2. Disturbance information - see disturbance raster below
   # this may be provided by the user, by the defaults or by other modules/family
   # of modules. It is the link between the spatial location of the disturbance
@@ -511,12 +512,17 @@ Init <- function(sim) {
       # rasterId <- c(1,2)
       # sim$userDist <- data.table(distName,rasterId)
       # warning("Default disturbances will be used. They are fire and clearcut, assigned raster values of 1 and 2 respectively.")
-      sim$userDist <- prepInputs(url = extractURL("userDist"),
-                                 fun = "data.table::fread",
-                                 destinationPath = dPath,
-                                 #purge = 7,
-                                 targetFile = "userDist.csv",
-                                 filename2 = "userDist.csv")
+
+      ## TODO: workaround failing prepInputs call (reproducible/issues/287)
+      # sim$userDist <- prepInputs(url = extractURL("userDist"),
+      #                            destinationPath = dPath,
+      #                            fun = "data.table::fread")
+      if (!file.exists(file.path(dPath, "userDist.csv"))) {
+        drive_download(as_id(extractURL("userDist")),
+                       path = file.path(dPath, "userDist.csv"),
+                       type = "spreadsheet")
+      }
+      sim$userDist <- fread(file.path(dPath, "userDist.csv"))
     } else {
       sim$userDist <- fread(sim$userDistFile)
     }
