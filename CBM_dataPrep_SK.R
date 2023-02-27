@@ -133,7 +133,7 @@ defineModule(sim, list(
     )
   ),
   outputObjects = bindrows(
-    createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
+    createsOutput(objectName = "pools", objectClass = "matrix", desc = NA), ## TODO
     createsOutput(
       objectName = "curveID", objectClass = "character",
       desc = "Vector of column names that together, uniquely define growth curve id"
