@@ -119,12 +119,12 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
-      desc = "URL for masterRaster - optional, need this or a masterRaster"
+      desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."
     ),
     expectsInput(
       objectName = "allPixDT", objectClass = "data.table",
       desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
-                   "growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)")
+                   "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)")
     ),
     expectsInput(
       objectName = "masterRaster", objectClass = "raster",
