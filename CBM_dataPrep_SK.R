@@ -626,6 +626,7 @@ Init <- function(sim) {
   # 5. Ecozone raster. This takes the masterRaster (study area) and figures
   # out what ecozones each pixels are in. This determines some
   # defaults CBM-parameters across Canada.
+
   if (!suppliedElsewhere(sim$ecoRaster)) {
     ecozones <- prepInputs(
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
@@ -641,13 +642,17 @@ Init <- function(sim) {
       field = "ECOZONE"
     )
   }
+  ##TODO: this is a hard fix - when creating the sim$ecoRaster there are 14
+  ##pixels that get NaN and those should be ecozone 9. Not sure why that is but
+  ##it creates NaNs where there should not be so we are doing a hard fixe here.
+  sim$ecoRaster[is.na(sim$ecoRaster)] <- 9
+
 
   dtRasters <- as.data.table(cbind(growth_curve_component_id = sim$gcIndexRaster[],
                                    ages = sim$ageRaster[],
                                    ecozones = sim$ecoRaster[],
                                    spatialUnitID = sim$spuRaster[])
                              )
-
 
   # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
   if (isTRUE(P(sim)$doAssertions)) {
