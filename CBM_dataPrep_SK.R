@@ -632,27 +632,29 @@ Init <- function(sim) {
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
       destinationPath = dPath,
-      rasterToMatch = sim$masterRaster,
-      overwrite = TRUE
-      #fun = "terra::vect"
-      #filename2 = TRUE
-    ) ##ecozones is now an sf class objects
-    sim$ecoRaster <- terra::rasterize(ecozones,
-      sim$masterRaster,
-      field = "ECOZONE"
-    )
-  }
-  ##TODO: this is a hard fix - when creating the sim$ecoRaster there are 14
-  ##pixels that get NaN and those should be ecozone 9. Not sure why that is but
-  ##it creates NaNs where there should not be so we are doing a hard fixe here.
-  sim$ecoRaster[is.na(sim$ecoRaster)] <- 9
+      filename1 = "ecozone_shp.zip",
+      # overwrite = TRUE, ## not needed if filename1 specified
+      fun = "terra::vect",
+      rasterToMatch = sim$masterRaster
+    ) ## ecozones is a SpatVect class object
 
+    sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
+
+    ## TODO: this is a hard fix - when creating the sim$ecoRaster there are 14
+    ##       pixels that get NaN and those should be ecozone 9. Not sure why that is but
+    ##       it creates NaNs where there should not be so we are doing a hard fix here.
+    sim$ecoRaster[is.na(sim$ecoRaster)] <- 9
+  }
+
+  ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
+  if (any(is.na(values(sim$ecoRaster)))) {
+    stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
+  }
 
   dtRasters <- as.data.table(cbind(growth_curve_component_id = sim$gcIndexRaster[],
                                    ages = sim$ageRaster[],
                                    ecozones = sim$ecoRaster[],
-                                   spatialUnitID = sim$spuRaster[])
-                             )
+                                   spatialUnitID = sim$spuRaster[]))
 
   # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
   if (isTRUE(P(sim)$doAssertions)) {
