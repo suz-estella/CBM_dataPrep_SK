@@ -637,7 +637,7 @@ Init <- function(sim) {
       fun = "sf::st_read", #"terra::vect",
       rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
-  ##TODO: terra::vect fails on some windows machines. Need to investigate.
+    ## TODO: terra::vect fails on some windows machines. Need to investigate.
     ecozones <- terra::vect(ecozones)
 
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
