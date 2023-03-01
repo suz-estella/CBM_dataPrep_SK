@@ -628,15 +628,17 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
 
   if (!suppliedElsewhere(sim$ecoRaster)) {
-    ecozones <- prepInputs(
+      ecozones <- prepInputs(
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
       destinationPath = dPath,
       filename1 = "ecozone_shp.zip",
       # overwrite = TRUE, ## not needed if filename1 specified
-      fun = "terra::vect",
+      fun = "sf::st_read", #"terra::vect",
       rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
+  ##TODO: terra::vect fails on some windows machines. Need to investigate.
+    ecozones <- terra::vect(ecozones)
 
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
 
