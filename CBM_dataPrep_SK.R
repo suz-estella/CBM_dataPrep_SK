@@ -635,10 +635,11 @@ Init <- function(sim) {
       filename1 = "ecozone_shp.zip",
       # overwrite = TRUE, ## not needed if filename1 specified
       fun = "sf::st_read", #"terra::vect",
-      rasterToMatch = sim$masterRaster
+      rasterToMatch = sim$masterRaster,
+      useCache = FALSE
     ) ## ecozones is a SpatVect class object
     ## TODO: terra::vect fails on some windows machines. Need to investigate.
-    ecozones <- terra::vect(ecozones)
+    #ecozones <- terra::vect(ecozones)
 
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
 
