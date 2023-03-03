@@ -635,18 +635,13 @@ Init <- function(sim) {
       filename1 = "ecozone_shp.zip",
       # overwrite = TRUE, ## not needed if filename1 specified
       fun = "sf::st_read", #"terra::vect",
-      rasterToMatch = sim$masterRaster,
-      useCache = FALSE
+      rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
-    ## TODO: terra::vect fails on some windows machines. Need to investigate.
-    #ecozones <- terra::vect(ecozones)
+    ## TODO: terra::vect fails on some windows machines. Windows does not
+    ## recognize some of the french characters.
+    # ecozones <- terra::vect(ecozones)
 
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
-
-    ## TODO: this is a hard fix - when creating the sim$ecoRaster there are 14
-    ##       pixels that get NaN and those should be ecozone 9. Not sure why that is but
-    ##       it creates NaNs where there should not be so we are doing a hard fix here.
-    sim$ecoRaster[is.na(sim$ecoRaster)] <- 9
   }
 
   ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
