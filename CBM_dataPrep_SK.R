@@ -584,6 +584,8 @@ Init <- function(sim) {
                            fun = "terra::rast",
                            destinationPath = dPath
     )
+    sim$ageRaster <- round(sim$ageRaster)
+    
     ## TODO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
     # maxAge <- max(sim$ageRaster)
