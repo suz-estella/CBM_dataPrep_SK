@@ -580,6 +580,7 @@ Init <- function(sim) {
     }
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
+                           to = sim$masterRaster,
                            fun = "terra::rast",
                            destinationPath = dPath
     )
