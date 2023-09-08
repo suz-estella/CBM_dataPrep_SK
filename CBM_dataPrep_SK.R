@@ -628,7 +628,7 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
 
   if (!suppliedElsewhere(sim$ecoRaster)) {
-      ecozones <- prepInputs(
+      ecozones <- Cache(prepInputs,
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
       destinationPath = dPath,
