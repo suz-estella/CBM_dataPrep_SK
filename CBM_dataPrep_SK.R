@@ -680,7 +680,7 @@ Init <- function(sim) {
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
     ## download the data and identify the .grd files present
     out <- preProcess(url = extractURL("disturbanceRasters"),
-                      destinationPath = file.path(dPath, "disturbance_testArea"),
+                      destinationPath = file.path(dPath),
                       filename1 = "disturbance_testArea.zip")
 
     sim$disturbanceRasters <- list.files(
