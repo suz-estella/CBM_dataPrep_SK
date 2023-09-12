@@ -581,6 +581,8 @@ Init <- function(sim) {
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
                            fun = "terra::rast",
+                           to = sim$masterRaster,
+                           method = "ngb", # need integers
                            destinationPath = dPath
     )
     ## TODO: put in a message to out pointing out the max age (this has to be
@@ -597,6 +599,8 @@ Init <- function(sim) {
     sim$gcIndexRaster <- Cache(prepInputs,
                                url = sim$gcIndexRasterURL,
                                fun = "terra::rast",
+                               to = sim$masterRaster,
+                               method = "ngb", # need integers
                                destinationPath = dPath)
   }
 
@@ -612,10 +616,11 @@ Init <- function(sim) {
                             alsoExtract = "similar")
 
     spuShp <- Cache(postProcess,
-                          canadaSpu,
-                          rasterToMatch = sim$masterRaster,
-                          #targetCRS = terra::crs(sim$masterRaster),
-                          useCache = FALSE, filename2 = NULL
+                    canadaSpu,
+                    to = sim$masterRaster,
+                    method = "ngb", # need integers
+                    #targetCRS = terra::crs(sim$masterRaster),
+                    useCache = FALSE, filename2 = NULL
     ) |> st_collection_extract("POLYGON")
 
     sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
@@ -628,14 +633,14 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
 
   if (!suppliedElsewhere(sim$ecoRaster)) {
-      ecozones <- Cache(prepInputs,
-      url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-      alsoExtract = "similar",
-      destinationPath = dPath,
-      filename1 = "ecozone_shp.zip",
-      # overwrite = TRUE, ## not needed if filename1 specified
-      fun = "sf::st_read", #"terra::vect",
-      rasterToMatch = sim$masterRaster
+    ecozones <- Cache(prepInputs,
+                      url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                      alsoExtract = "similar",
+                      destinationPath = dPath,
+                      filename1 = "ecozone_shp.zip",
+                      # overwrite = TRUE, ## not needed if filename1 specified
+                      fun = "sf::st_read", #"terra::vect",
+                      rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
     ## TODO: terra::vect fails on some windows machines. Windows does not
     ## recognize some of the french characters.
