@@ -553,23 +553,23 @@ Init <- function(sim) {
   ## Jan 2023 addition from Eliot from Zulip R-help
   options("reproducible.useTerra" = TRUE)
   # 1. Raster to match (masterRaster). This is the study area.
-  if (!suppliedElsewhere("masterRaster", sim)) {
-    if (!suppliedElsewhere("masterRasterURL", sim)) {
-      sim$masterRasterURL <- extractURL("masterRaster")
+  if (!suppliedElsewhere("masterRasterURL", sim)) {
+    sim$masterRasterURL <- extractURL("masterRaster")
+    if (!suppliedElsewhere("masterRaster", sim)) {
       ## TO DO: why is this
       message(
         "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
         "masterRaster is going to be read from the default URL given in the inputObjects for ",
         currentModule(sim)
       )
-    }
-    sim$masterRaster <- Cache(
-      prepInputs,
-      url = sim$masterRasterURL,
-      fun = "terra::rast",
-      destinationPath = dPath
-    )
+      sim$masterRaster <- Cache(
+        prepInputs,
+        url = sim$masterRasterURL,
+        fun = "terra::rast",
+        destinationPath = dPath
+      )
 
+    }
     sim$masterRaster[sim$masterRaster == 0] <- NA
   }
 
