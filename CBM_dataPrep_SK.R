@@ -582,7 +582,7 @@ Init <- function(sim) {
                            url = sim$ageRasterURL,
                            fun = "terra::rast",
                            to = sim$masterRaster,
-                           method = "ngb", # need integers
+                           method = "near", # need integers
                            destinationPath = dPath
     )
     ## TODO: put in a message to out pointing out the max age (this has to be
@@ -600,7 +600,7 @@ Init <- function(sim) {
                                url = sim$gcIndexRasterURL,
                                fun = "terra::rast",
                                to = sim$masterRaster,
-                               method = "ngb", # need integers
+                               method = "near", # need integers
                                destinationPath = dPath)
   }
 
@@ -618,7 +618,7 @@ Init <- function(sim) {
     spuShp <- Cache(postProcess,
                     canadaSpu,
                     to = sim$masterRaster,
-                    method = "ngb", # need integers
+                    method = "near", # need integers
                     #targetCRS = terra::crs(sim$masterRaster),
                     useCache = FALSE, filename2 = NULL
     ) |> st_collection_extract("POLYGON")
