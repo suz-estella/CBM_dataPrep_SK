@@ -405,7 +405,7 @@ Init <- function(sim) {
 
   ## this creates a bunch of warnings here...
   mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-  names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
+  setnames(mySpuDmids, new = c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id"))
   sim$mySpuDmids <- mySpuDmids
   # need to match the historic and last past dist to the spatial unit
   # DECISION: both the last pass and the historic disturbance will be the same
@@ -497,7 +497,7 @@ Init <- function(sim) {
     } else {
       sim$userGcM3 <- fread(sim$userGcM3File)
     }
-    names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
+    setnames(sim$userGcM3, new = c("GrowthCurveComponentID", "Age", "MerchVolume"))
   }
 
   # 2. Disturbance information - see disturbance raster below
