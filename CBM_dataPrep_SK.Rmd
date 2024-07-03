@@ -9,18 +9,22 @@ output:
     keep_md: yes
 editor_options:
   chunk_output_type: console
+  markdown: 
+    wrap: sentence
 ---
+# CBM_dataPrep_SK
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, results = "hold")
 ```
 
-# Overview
+## Overview
 
 This module is to read-in user-provided information or provide defaults.
 It reads-in rasters (`ageRaster`, `ecoRaster`, `gcIndexRaster`, `spuRaster`, and `masterRaster`) from either defaults of provided by the user.
 From the rasters, `pixelGroup` are created which are unique combinations of the rasters values.
-`pixelGroup` is a main processing unit in SpaDES `CBM` simulations. In a first step, a `spatialDT` which is a `data.table` listing all pixels with their respective values of `raster`, `pixelIndex` and `pixelGroup` is created (`sim$spatialDT`).
+`pixelGroup` is a main processing unit in SpaDES `CBM` simulations.
+In a first step, a `spatialDT` which is a `data.table` listing all pixels with their respective values of `raster`, `pixelIndex` and `pixelGroup` is created (`sim$spatialDT`).
 From the `spatialDT`, a reduced `data.table` is create (`sim$level3DT`) which is the data.table from which processing will start in `CBM_core`.
 The number of records in this data.table (`sim$level3DT`) should equal the number of pixel groups that will be processed in the spinup event of the `CBM_core` module.
 This present module also creates variables of the same length as the rows in `level3DT` for use in other events of the `CBM_core` module.
@@ -34,18 +38,17 @@ The disturbance names (`userDist$distName`) and their location of the disturbanc
 Disturbance Matrices (DM) determine what proportion of a carbon pool gets transferred to another carbon pool via disturbance.
 There are 426 matrix IDs in the present default data (`sim$processes$disturbanceMatrices`).
 DMIDs (Disturbance Matrix IDs) are part of the default data of CBM-CFS3.
-DMs are specific to spatial units which are a numbering (48 of them `sim$cbmData@spatialUnitIds`) of the overlay of the administrative boundaries and ecozones in Canada. 
-Spatial units are central units in CBM-CFS3, as are ecozones because both determining various ecological and other parameters that will be used in simulations via the `CBM_core` module. 
+DMs are specific to spatial units which are a numbering (48 of them `sim$cbmData@spatialUnitIds`) of the overlay of the administrative boundaries and ecozones in Canada.
+Spatial units are central units in CBM-CFS3, as are ecozones because both determining various ecological and other parameters that will be used in simulations via the `CBM_core` module.
 The proportion of carbon transferred by a specific DMID can be found here `sim$cbmData@disturbanceMatrixValues`.
 A series of R-functions were built to help users associate the correct disturbance matrices (`spuDist()`, `mySpu()`, `seeDist()`, `simDist()`) and are searchable in this package.
 
-Note: 
-* CBM_defaults objects are recreated in the `.inputObject` of this module
-* nothing is in carbon or carbon increments at this point. This module feeds into the CBM_core module as does the CBM_vol2biomass.R module. 
+Note: \* CBM_defaults objects are recreated in the `.inputObject` of this module \* nothing is in carbon or carbon increments at this point.
+This module feeds into the CBM_core module as does the CBM_vol2biomass.R module.
 
-# Usage
+## Usage
 
-```{r module_usage}
+```{r module_dataprep_usage, eval=FALSE}
 library(igraph)
 library(SpaDES.core)
 
@@ -78,22 +81,22 @@ myInputs <- simInit(times = times, params = parameters, modules = modules,
 outInputs <- spades(myInputs)
 ```
 
-# Events
+## Events
 
 There is only when event (init) is this module.
 
-# Data dependencies
+## Data dependencies
 
-## Module parameters
+### Module parameters
 
-```{r moduleParams, echo = FALSE, eval = TRUE}
+```{r moduleParams, echo = FALSE, eval = FALSE}
 df_params <- SpaDES.core::moduleParams("CBM_dataPrep_SK", "..")
 knitr::kable(df_params)
 ```
 
-## Input data
+### Input data
 
-```{r moduleInputs, echo = FALSE, eval = TRUE}
+```{r moduleInputs, echo = FALSE, eval = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("CBM_dataPrep_SK", "..")
 knitr::kable(df_inputs)
 ```
@@ -101,38 +104,33 @@ knitr::kable(df_inputs)
 An example with all the user-provided rasters and `.csv` files is provided by default.
 The example simulates a region of the managed forests of SK.
 All rasters and data frames for this example are on a cloud-drive (`userDefaultData_CBM_SK`).
-Unless using this example, the user most provide: 
+Unless using this example, the user most provide:
 
-* a raster of the study area at the desired resolution for simulation (`sim$masterRaster`)
-* an age raster (`sim$ageRaster`)
-* a raster indicating which growth curve should be applied to which pixels (`sim$gcIndexRaster`) or a URL for this raster (`sim$gcIndexRasterURL`).
-* raster of disturbances for each year the user wants disturbances to be simulated.
-  This information could come from other SpaDES modules (fireSence, other fire modules, insects modules, etc.).
-  For retrospective simulation (past to present), rasters found here can be used anywhere in Canada <https://opendata.nfis.org/downloads/forest_change/CA_forest_harvest_mask_year_1985_2015.zip>.
-* a `.csv` file of the growth curve for the study area (with links to the `sim$gcIndexRaster`), `sim$userGcM3.csv` or the location of this file (`sim$userGcM3File`).
-  The `sim$userGcM3.csv` file is required to have three columns: 
-    + "GrowthCurveComponentID", which will be the link to the raster `sim$gcIndexRaster`, 
-    + "Age" ranging from 0 to the maximum age of the growth curve, and 
-    + "MerchVolume" which is the cumulative value of m3/ha at each age along each growth curve.
-* a file with the disturbances to be applied as well as their raster values (`sim$userDist`) or its location (`sim$userDistFile`).
-  The `userDist.csv` file must have three columns:
-    + "distName" representing a simple description of the disturbance type (e.g., fire, clearcut, deforestation, etc.).
-    + "rasterId" which indications the value that this specific disturbance will have on the disturbance raster.
-    + "wholeStand" indicating if the disturbance is stand-replacing disturbance (1) or a partial disturbance (0).
+-   a raster of the study area at the desired resolution for simulation (`sim$masterRaster`)
+-   an age raster (`sim$ageRaster`)
+-   a raster indicating which growth curve should be applied to which pixels (`sim$gcIndexRaster`) or a URL for this raster (`sim$gcIndexRasterURL`).
+-   raster of disturbances for each year the user wants disturbances to be simulated. This information could come from other SpaDES modules (fireSence, other fire modules, insects modules, etc.). For retrospective simulation (past to present), rasters found here can be used anywhere in Canada <https://opendata.nfis.org/downloads/forest_change/CA_forest_harvest_mask_year_1985_2015.zip>.
+-   a `.csv` file of the growth curve for the study area (with links to the `sim$gcIndexRaster`), `sim$userGcM3.csv` or the location of this file (`sim$userGcM3File`). The `sim$userGcM3.csv` file is required to have three columns:
+    -   "GrowthCurveComponentID", which will be the link to the raster `sim$gcIndexRaster`,
+    -   "Age" ranging from 0 to the maximum age of the growth curve, and
+    -   "MerchVolume" which is the cumulative value of m3/ha at each age along each growth curve.
+-   a file with the disturbances to be applied as well as their raster values (`sim$userDist`) or its location (`sim$userDistFile`). The `userDist.csv` file must have three columns:
+    -   "distName" representing a simple description of the disturbance type (e.g., fire, clearcut, deforestation, etc.).
+    -   "rasterId" which indications the value that this specific disturbance will have on the disturbance raster.
+    -   "wholeStand" indicating if the disturbance is stand-replacing disturbance (1) or a partial disturbance (0).
 
-The user could provide:
-* a raster of the ecozones in their study area (`sim$ecoRaster`), but the script will calculate this raster based on the `sim$masterRaster` if it is not provided.
-* a raster of the spatial units (`sim$spuRaster`) but the script will calculate this raster based on the `sim$masterRaster` if it is not provided. 
+The user could provide: \* a raster of the ecozones in their study area (`sim$ecoRaster`), but the script will calculate this raster based on the `sim$masterRaster` if it is not provided.
+\* a raster of the spatial units (`sim$spuRaster`) but the script will calculate this raster based on the `sim$masterRaster` if it is not provided.
 
-## Output data
+### Output data
 
-```{r moduleOutputs, echo = FALSE, eval = TRUE}
+```{r moduleOutputs, echo = FALSE, eval = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("CBM_dataPrep_SK", "..")
 knitr::kable(df_outputs)
 ```
 
-# Links to other modules
+## Links to other modules
 
-- [`CBM_core`](https://github.com/PredictiveEcology/CBM_core)
-- [`CBM_defaults`](https://github.com/PredictiveEcology/CBM_defaults)
-- [`CBM_vol2biomass`](https://github.com/PredictiveEcology/CBM_vol2biomass)
+-   [`CBM_core`](https://github.com/PredictiveEcology/CBM_core)
+-   [`CBM_defaults`](https://github.com/PredictiveEcology/CBM_defaults)
+-   [`CBM_vol2biomass`](https://github.com/PredictiveEcology/CBM_vol2biomass)
