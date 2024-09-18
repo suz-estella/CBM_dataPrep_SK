@@ -245,15 +245,15 @@ Init <- function(sim) {
   available <- available[-omit]
   objectNamesExpected <- objectNamesExpected[-omit]
 
-  if (any(!available)) {
-    stop(
-      "The inputObjects for CBM_core are not all available:",
-      "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
-      ". \n\nHave you run ",
-      paste0("CBM_", c("defaults"), collapse = ", "),
-      "?"
-    )
-  }
+  # if (any(!available)) {
+  #   stop(
+  #     "The inputObjects for CBM_core are not all available:",
+  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
+  #     ". \n\nHave you run ",
+  #     paste0("CBM_", c("defaults"), collapse = ", "),
+  #     "?"
+  #   )
+  # }
 
   spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(growth_curve_id),]
 
@@ -328,7 +328,7 @@ Init <- function(sim) {
   ## Creating all the vectors for the spinup --------------------------------
   sim$ages <- sim$level3DT[, ages]
   sim$nStands <- length(sim$ages)
-  sim$pools <- matrix(ncol = sim$PoolCount, nrow = sim$nStands, data = 0)
+  sim$pools <- matrix(ncol = sim$poolCount, nrow = sim$nStands, data = 0)
   colnames(sim$pools) <- sim$pooldef
   sim$pools[, "Input"] <- rep(1.0, nrow(sim$pools))
   sim$delays <- rep.int(0, sim$nStands)
@@ -449,31 +449,31 @@ Init <- function(sim) {
     sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db")
   }
 
-  if (!suppliedElsewhere(sim$cbmData)) {
-    spatialUnitIds <- as.matrix(getTable("spatialUnitIds.sql", sim$dbPath, sim$sqlDir))
-    disturbanceMatrix <- as.matrix(getTable("disturbanceMatrix.sql", sim$dbPath, sim$sqlDir))
-    sim$cbmData <- new("dataset",
-      turnoverRates = as.matrix(getTable("turnoverRates.sql", sim$dbPath, sim$sqlDir)),
-      rootParameters = as.matrix(getTable("rootParameters.sql", sim$dbPath, sim$sqlDir)),
-      decayParameters = as.matrix(getTable("decayParameters.sql", sim$dbPath, sim$sqlDir)),
-      spinupParameters = as.matrix(getTable("spinupParameters.sql", sim$dbPath, sim$sqlDir)),
-      climate = as.matrix(getTable("climate.sql", sim$dbPath, sim$sqlDir)),
-      spatialUnitIds = spatialUnitIds,
-      slowAGtoBGTransferRate = as.matrix(0.006),
-      biomassToCarbonRate = as.matrix(0.5),
-      stumpParameters = as.matrix(getTable("stumpParameters.sql", sim$dbPath, sim$sqlDir)),
-      overmatureDeclineParameters = as.matrix(getTable("overmaturedecline.sql", sim$dbPath, sim$sqlDir)),
-      disturbanceMatrix = disturbanceMatrix,
-      disturbanceMatrixAssociation = as.matrix(getTable("disturbanceMatrixAssociation.sql", sim$dbPath, sim$sqlDir)),
-      disturbanceMatrixValues = as.matrix(getTable("disturbanceMatrixValues.sql", sim$dbPath, sim$sqlDir)),
-      landclasses = as.matrix(getTable("landclasses.sql", sim$dbPath, sim$sqlDir)),
-      pools = as.matrix(getTable("pools.sql", sim$dbPath, sim$sqlDir)),
-      domPools = as.matrix(getTable("domPools.sql", sim$dbPath, sim$sqlDir))
-    )
-  }
+  # if (!suppliedElsewhere(sim$cbmData)) {
+  #   spatialUnitIds <- as.matrix(getTable("spatialUnitIds.sql", sim$dbPath, sim$sqlDir))
+  #   disturbanceMatrix <- as.matrix(getTable("disturbanceMatrix.sql", sim$dbPath, sim$sqlDir))
+  #   sim$cbmData <- new("dataset",
+  #     turnoverRates = as.matrix(getTable("turnoverRates.sql", sim$dbPath, sim$sqlDir)),
+  #     rootParameters = as.matrix(getTable("rootParameters.sql", sim$dbPath, sim$sqlDir)),
+  #     decayParameters = as.matrix(getTable("decayParameters.sql", sim$dbPath, sim$sqlDir)),
+  #     spinupParameters = as.matrix(getTable("spinupParameters.sql", sim$dbPath, sim$sqlDir)),
+  #     climate = as.matrix(getTable("climate.sql", sim$dbPath, sim$sqlDir)),
+  #     spatialUnitIds = spatialUnitIds,
+  #     slowAGtoBGTransferRate = as.matrix(0.006),
+  #     biomassToCarbonRate = as.matrix(0.5),
+  #     stumpParameters = as.matrix(getTable("stumpParameters.sql", sim$dbPath, sim$sqlDir)),
+  #     overmatureDeclineParameters = as.matrix(getTable("overmaturedecline.sql", sim$dbPath, sim$sqlDir)),
+  #     disturbanceMatrix = disturbanceMatrix,
+  #     disturbanceMatrixAssociation = as.matrix(getTable("disturbanceMatrixAssociation.sql", sim$dbPath, sim$sqlDir)),
+  #     disturbanceMatrixValues = as.matrix(getTable("disturbanceMatrixValues.sql", sim$dbPath, sim$sqlDir)),
+  #     landclasses = as.matrix(getTable("landclasses.sql", sim$dbPath, sim$sqlDir)),
+  #     pools = as.matrix(getTable("pools.sql", sim$dbPath, sim$sqlDir)),
+  #     domPools = as.matrix(getTable("domPools.sql", sim$dbPath, sim$sqlDir))
+  #   )
+  # }
   if (!suppliedElsewhere(sim$pooldef)) {
     sim$pooldef <- CBMutils::.pooldef
-    sim$PoolCount <- length(sim$pooldef)
+    sim$poolCount <- length(sim$pooldef)
   }
 
   # user provided data tables (3)------------------------------------------------------
