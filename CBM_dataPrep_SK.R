@@ -49,7 +49,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "cbmData", objectClass = "dataset",
       desc = "S4 object created from selective reading in of cbm_default.db in CBM_efaults module",
-      sourceURL = NA
+      sourceURL = NA #TODO: change to the appropriate file from defaults
     ),
     expectsInput(
       objectName = "pooldef", objectClass = "character",
@@ -335,7 +335,7 @@ Init <- function(sim) {
   sim$minRotations <- rep.int(10, sim$nStands)
   sim$maxRotations <- rep.int(30, sim$nStands)
   setkeyv(sim$level3DT, "spatial_unit_id")
-  spinupParameters <- as.data.table(sim$cbmData@spinupParameters[, c(1, 2)])
+  spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 2)])
   setkeyv(spinupParameters,"spatial_unit_id")
   retInt <- merge.data.table(sim$level3DT, spinupParameters,
                              by = "spatial_unit_id", all.x = TRUE)
