@@ -325,6 +325,7 @@ Init <- function(sim) {
 
   setorderv(sim$level3DT, "pixelGroup")
 
+
   ## Creating all the vectors for the spinup --------------------------------
   sim$ages <- sim$level3DT[, ages]
   sim$nStands <- length(sim$ages)
@@ -335,8 +336,9 @@ Init <- function(sim) {
   sim$minRotations <- rep.int(10, sim$nStands)
   sim$maxRotations <- rep.int(30, sim$nStands)
   setkeyv(sim$level3DT, "spatial_unit_id")
-  spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 2)])
-  setkeyv(spinupParameters,"spatial_unit_id")
+  spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 7)]) ##TODO columns were changed to fit the appropriate columns from sim$spinupSQL
+  setkeyv(spinupParameters,"id")
+  spinupParameters <- setNames(spinupParameters, replace(names(spinupParameters), names(spinupParameters) == 'id', 'spatial_unit_id'))
   retInt <- merge.data.table(sim$level3DT, spinupParameters,
                              by = "spatial_unit_id", all.x = TRUE)
   setkeyv(retInt, "pixelGroup")
@@ -353,7 +355,7 @@ Init <- function(sim) {
   # making sim$mySpuDmids
 
   userDist <- sim$userDist
-
+browser()
   # Most cases will only require fire (wildfire) and a clearcut. There are 426
   # disturbance matrices identified in the archive of CBM
   # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
@@ -367,6 +369,12 @@ Init <- function(sim) {
   # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
   # spatial unit with the name of the disturbance in the 3rd colum.
   listDist <- spuDist(spu, sim$dbPath)
+  ##TODO: error when running new cbm_defaults:
+  ## Error in `[.data.frame`(cbmTables[[7]], which(cbmTables[[7]][, 1] %in%  :
+  ## undefined columns selected.
+  # error occurs at this point in the spuDist function:
+  ## dmid <- unique(cbmTables[[7]][which(cbmTables[[7]][, 1] %in%
+  #  mySpu), c(1, 3)])
 
   ## Example specific for SK (as per Boisvenue et al 2016)
   # Disturbances are from White and Wulder and provided as yearly rasters
@@ -442,11 +450,11 @@ Init <- function(sim) {
   # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
   # then $sqlDir and $dbPath are not needed.
   if (!suppliedElsewhere(sim$sqlDir)) {
-    sim$sqlDir <- file.path(dPath, "cbm_defaults")
+    sim$sqlDir <- file.path(dPath, "cbm_defaults") ##TODO: this needs to be updated with the new version of cbm_defaults
   }
 
   if (!suppliedElsewhere(sim$dbPath)) {
-    sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db")
+    sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db") ##TODO: this needs to be updated with the new version of cbm_defaults
   }
 
   # if (!suppliedElsewhere(sim$cbmData)) {
