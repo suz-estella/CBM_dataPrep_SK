@@ -95,11 +95,11 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "URL for ageRaster - optional, need this or a ageRaster"
+      desc = "URL for gcIndexRaste - optional, need this or a ageRaster"
     ),
     expectsInput(
       objectName = "gcIndexRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel",
+      desc = "Raster giving the growth curve value for each pixel",
       sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"
     ),
     expectsInput(
@@ -644,13 +644,13 @@ browser()
     if (!suppliedElsewhere(sim$ageRasterURL)) {
       sim$ageRasterURL <- extractURL("ageRaster")
     }
-    sim$ageRaster <- Cache(prepInputs,
+    sim$ageRaster <- prepInputs()
                            url = sim$ageRasterURL,
                            fun = "terra::rast",
                            to = sim$masterRaster,
                            method = "near", # need integers
                            destinationPath = dPath
-    )
+    )|> Cache()
     ## TODO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
     # maxAge <- max(sim$ageRaster)
