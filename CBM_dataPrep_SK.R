@@ -75,6 +75,16 @@ defineModule(sim, list(
       sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH"
     ),
     expectsInput(
+      objectName = "cbmAdmin", objectClass = "data.frame",
+      desc = paste("Provides equivalent between provincial boundaries,",
+                   "CBM-id for provincial boundaries and CBM-spatial unit ids"),
+      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
+    ),
+    expectsInput(
+      objectName = "cbmAdminURL", objectClass = "character",
+      desc = "URL for cbmAdmin"
+    ),
+    expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
       desc = "URL for ageRaster - optional, need this or a ageRaster"
     ),
@@ -101,17 +111,16 @@ defineModule(sim, list(
       desc = "Raster has ecozones for each pixel"
     ),
     expectsInput(
-      objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
-      desc = paste("User file name for the files containing: GrowthCurveComponentID,Age,MerchVolume.",
-                   "Default name userGcM3"),
-      sourceURL = NA
+      objectName = "userGcM3URL", objectClass = "character",
+      desc = "URL for userGcM3"
     ),
     expectsInput(
-      objectName = "userGcM3", objectClass = "dataframe",
-      desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
+      objectName = "userGcM3", objectClass = "data.frame",
+      desc = paste("User file containing:",
+                   "`gcids`, `Age`, `MerchVolume`.",
+                   "Default name `userGcM3`."),
       sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"
-    ),
-    expectsInput(
+    ),    expectsInput(
       objectName = "disturbanceRasters", objectClass = "vector",
       desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
       sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
@@ -241,7 +250,7 @@ Init <- function(sim) {
   available <- objectNamesExpected %in% ls(sim)
 
   ## TODO: these aren't required
-  omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3File"))
+  omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3URL"))
   available <- available[-omit]
   objectNamesExpected <- objectNamesExpected[-omit]
 
@@ -442,71 +451,98 @@ browser()
 }
 
 .inputObjects <- function(sim) {
+  browser()
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
+  ##TODO recheck that this is correct
+  # there seems to be something confusing here. dataPath(sim) gives me
+  # "C:/Celine/github/spadesCBM/modules/CBM_dataPrep_SK/data", but the next line
+  # gives "Sep26 15:18:01 CBM_dt:.inputObjects CBM_dataPrep_SK: using dataPath
+  # 'inputs'. Which is "C:/Celine/github/spadesCBM/inputs"
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  # if we chose to not use the RSQLite library in this module, and extract
-  # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
-  # then $sqlDir and $dbPath are not needed.
-  if (!suppliedElsewhere(sim$sqlDir)) {
-    sim$sqlDir <- file.path(dPath, "cbm_defaults") ##TODO: this needs to be updated with the new version of cbm_defaults
-  }
-
-  if (!suppliedElsewhere(sim$dbPath)) {
-    sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db") ##TODO: this needs to be updated with the new version of cbm_defaults
-  }
-
-  # if (!suppliedElsewhere(sim$cbmData)) {
-  #   spatialUnitIds <- as.matrix(getTable("spatialUnitIds.sql", sim$dbPath, sim$sqlDir))
-  #   disturbanceMatrix <- as.matrix(getTable("disturbanceMatrix.sql", sim$dbPath, sim$sqlDir))
-  #   sim$cbmData <- new("dataset",
-  #     turnoverRates = as.matrix(getTable("turnoverRates.sql", sim$dbPath, sim$sqlDir)),
-  #     rootParameters = as.matrix(getTable("rootParameters.sql", sim$dbPath, sim$sqlDir)),
-  #     decayParameters = as.matrix(getTable("decayParameters.sql", sim$dbPath, sim$sqlDir)),
-  #     spinupParameters = as.matrix(getTable("spinupParameters.sql", sim$dbPath, sim$sqlDir)),
-  #     climate = as.matrix(getTable("climate.sql", sim$dbPath, sim$sqlDir)),
-  #     spatialUnitIds = spatialUnitIds,
-  #     slowAGtoBGTransferRate = as.matrix(0.006),
-  #     biomassToCarbonRate = as.matrix(0.5),
-  #     stumpParameters = as.matrix(getTable("stumpParameters.sql", sim$dbPath, sim$sqlDir)),
-  #     overmatureDeclineParameters = as.matrix(getTable("overmaturedecline.sql", sim$dbPath, sim$sqlDir)),
-  #     disturbanceMatrix = disturbanceMatrix,
-  #     disturbanceMatrixAssociation = as.matrix(getTable("disturbanceMatrixAssociation.sql", sim$dbPath, sim$sqlDir)),
-  #     disturbanceMatrixValues = as.matrix(getTable("disturbanceMatrixValues.sql", sim$dbPath, sim$sqlDir)),
-  #     landclasses = as.matrix(getTable("landclasses.sql", sim$dbPath, sim$sqlDir)),
-  #     pools = as.matrix(getTable("pools.sql", sim$dbPath, sim$sqlDir)),
-  #     domPools = as.matrix(getTable("domPools.sql", sim$dbPath, sim$sqlDir))
+  ##TODO we need either use something that checks if the user has run
+  ##CBM_defaults.R or require the user to provide the information that would
+  ##come from CBM_defaults, in another way.
+  #This (below and commented) would be a way to check is all objects are
+  #there...but we can't run it until this module is cleaned up and the expected
+  #and created objects are correct.
+  # io <- inputObjects(sim, currentModule(sim))
+  # objectNamesExpected <- io$objectName
+  # available <- objectNamesExpected %in% ls(sim)
+  # if (any(!available)) {
+  #   stop(
+  #     "The inputObjects for CBM_dataPrep_XX are not all available:",
+  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
+  #     ". \n\nHave you run the ",
+  #     paste0("CBM", c("_defaults"), collapse = ", "),
+  #     "module?"
   #   )
   # }
-  if (!suppliedElsewhere(sim$pooldef)) {
-    sim$pooldef <- CBMutils::.pooldef
-    sim$poolCount <- length(sim$pooldef)
-  }
+  #
+
+  ##TODO figure out a way to run this module (CBM_dataPrep_XX) if user doesn't run CBM_defaults.
+  ##OLD - delete once everything works for the SK managed forests.
+  # # if we chose to not use the RSQLite library in this module, and extract
+  # # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
+  # # then $sqlDir and $dbPath are not needed.
+  # if (!suppliedElsewhere(sim$sqlDir)) {
+  #   sim$sqlDir <- file.path(dPath, "cbm_defaults") ##TODO: this needs to be updated with the new version of cbm_defaults
+  # }
+  #
+  # if (!suppliedElsewhere(sim$dbPath)) {
+  #   sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db") ##TODO: this needs to be updated with the new version of cbm_defaults
+  # }
+  #
+  # # if (!suppliedElsewhere(sim$cbmData)) {
+  # #   spatialUnitIds <- as.matrix(getTable("spatialUnitIds.sql", sim$dbPath, sim$sqlDir))
+  # #   disturbanceMatrix <- as.matrix(getTable("disturbanceMatrix.sql", sim$dbPath, sim$sqlDir))
+  # #   sim$cbmData <- new("dataset",
+  # #     turnoverRates = as.matrix(getTable("turnoverRates.sql", sim$dbPath, sim$sqlDir)),
+  # #     rootParameters = as.matrix(getTable("rootParameters.sql", sim$dbPath, sim$sqlDir)),
+  # #     decayParameters = as.matrix(getTable("decayParameters.sql", sim$dbPath, sim$sqlDir)),
+  # #     spinupParameters = as.matrix(getTable("spinupParameters.sql", sim$dbPath, sim$sqlDir)),
+  # #     climate = as.matrix(getTable("climate.sql", sim$dbPath, sim$sqlDir)),
+  # #     spatialUnitIds = spatialUnitIds,
+  # #     slowAGtoBGTransferRate = as.matrix(0.006),
+  # #     biomassToCarbonRate = as.matrix(0.5),
+  # #     stumpParameters = as.matrix(getTable("stumpParameters.sql", sim$dbPath, sim$sqlDir)),
+  # #     overmatureDeclineParameters = as.matrix(getTable("overmaturedecline.sql", sim$dbPath, sim$sqlDir)),
+  # #     disturbanceMatrix = disturbanceMatrix,
+  # #     disturbanceMatrixAssociation = as.matrix(getTable("disturbanceMatrixAssociation.sql", sim$dbPath, sim$sqlDir)),
+  # #     disturbanceMatrixValues = as.matrix(getTable("disturbanceMatrixValues.sql", sim$dbPath, sim$sqlDir)),
+  # #     landclasses = as.matrix(getTable("landclasses.sql", sim$dbPath, sim$sqlDir)),
+  # #     pools = as.matrix(getTable("pools.sql", sim$dbPath, sim$sqlDir)),
+  # #     domPools = as.matrix(getTable("domPools.sql", sim$dbPath, sim$sqlDir))
+  # #   )
+  # # }
+  # if (!suppliedElsewhere(sim$pooldef)) {
+  #   sim$pooldef <- CBMutils::.pooldef
+  #   sim$poolCount <- length(sim$pooldef)
+  # }
 
   # user provided data tables (3)------------------------------------------------------
 
   # 1. growth and yield information
-  # userGcM3 and userGcM3File, these files are the m3/ha and age info by growth
+  # userGcM3 and userGcM3URL, these files are the m3/ha and age info by growth
   # curve ID, columns should be GrowthCurveComponentID	Age	MerchVolume
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
   if (!suppliedElsewhere("userGcM3", sim)) {
-    if (!suppliedElsewhere("userGcM3File", sim)) {
-      sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
-                                 fun = "data.table::fread",
-                                 destinationPath = dPath,
-                                 #purge = 7,
-                                 filename2 = "userGcM3.csv")
-
-      message(
-        "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
-        "The default will be used which is for a region in Saskatchewan."
-      )
-    } else {
-      sim$userGcM3 <- fread(sim$userGcM3File)
+    if (!suppliedElsewhere("userGcM3URL", sim)) {
+      sim$userGcM3URL <- extractURL("userGcM3")
     }
-    names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
+    sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
+                               destinationPath = inputPath(sim),
+                               targetFile = "userGcM3.csv",
+                               fun = "data.table::fread")
+    names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
+    message(
+      "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
+      "The default will be used which is for a region in Saskatchewan."
+    )
   }
+
+
 
   # 2. Disturbance information - see disturbance raster below
   # this may be provided by the user, by the defaults or by other modules/family
@@ -515,33 +551,38 @@ browser()
   if (!suppliedElsewhere(sim$userDist)) {
     if (!suppliedElsewhere(sim$userDistFile)) {
       message("There is no disturbance information provided; defaults for the Saskatchewan example run will be used.")
-      # DO THIS: make a default of the basic ones
-      # distName <- c("fire", "clearcut")
-      # rasterId <- c(1,2)
-      # sim$userDist <- data.table(distName,rasterId)
-      # warning("Default disturbances will be used. They are fire and clearcut, assigned raster values of 1 and 2 respectively.")
 
       ## TODO: workaround failing prepInputs call (reproducible/issues/287)
       # sim$userDist <- prepInputs(url = extractURL("userDist"),
       #                            destinationPath = dPath,
       #                            fun = "data.table::fread")
       if (!file.exists(file.path(dPath, "userDist.csv"))) {
-        drive_download(as_id(extractURL("userDist")),
-                       path = file.path(dPath, "userDist.csv"),
-                       type = "spreadsheet")
+        userDistURL <- extractURL("userDist")
       }
-      sim$userDist <- fread(file.path(dPath, "userDist.csv"))
-    } else {
+        #drive_download(as_id(extractURL("userDist")),
+      #                  path = file.path(dPath, "userDist.csv"),
+      #                  type = "spreadsheet")
+      sim$userDist <- prepInputs(url = userDistURL,
+                                 destinationPath = inputPath(sim),
+                                 targetFile = "userDist.csv",
+                                 fun = "data.table::fread")
+      }
+    else {
       sim$userDist <- fread(sim$userDistFile)
     }
   }
 
-  # 3. cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
-  # for the SK simulations, this info is provided directly as a raster (raster
-  # #4 below)
-  # if (!suppliedElsewhere("cbmAdmin", sim)) {
-  #   sim$cbmAdmin <- fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
-  # }
+  # 3. cbmAdmin needed if the user is not running CBM_vol2biomass module.
+
+  if (!suppliedElsewhere("cbmAdmin", sim)) {
+    if (!suppliedElsewhere("cbmAdminURL", sim)) {
+      sim$cbmAdminURL <- extractURL("cbmAdmin")
+    }
+    sim$cbmAdmin <- prepInputs(url = sim$cbmAdminURL,
+                               targetFile = "cbmAdmin.csv",
+                               destinationPath = "inputs",
+                               fun = fread)
+  }
 
   # END user provided data tables (3)------------------------------------------------------
 
@@ -564,23 +605,40 @@ browser()
   if (!suppliedElsewhere("masterRasterURL", sim)) {
     sim$masterRasterURL <- extractURL("masterRaster")
     if (!suppliedElsewhere("masterRaster", sim)) {
-      ## TO DO: why is this
+      ##TODO: why is this
       message(
         "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
         "masterRaster is going to be read from the default URL given in the inputObjects for ",
         currentModule(sim)
       )
-      sim$masterRaster <- Cache(
-        prepInputs,
-        url = sim$masterRasterURL,
-        fun = "terra::rast",
-        destinationPath = dPath
-      )
+
+      ##TODO this is the masterRaster for all of SK managed forests..why is it
+      ##not exactly 30 m res? Need to fix that.
+      # sim$masterRaster <- prepInputs(
+      #   url = sim$masterRasterURL,
+      #   fun = "terra::rast",
+      #   destinationPath = dPath
+      # )|> Cache()
+
+      ##TODO this is the raster for a small area example on which we built the
+      ##Python transition. Once everything works, keep a copy and do a
+      ##CBM_dataPrep_SK for all the managed forests of SK.
+
+        extent <-  reproducible::.unwrap(structure(list(xmin = -687696, xmax = -681036,
+                                                      ymin = 711955, ymax = 716183), class = "PackedSpatExtent"))
+        masterRaster <- terra::rast(extent, res = 30)
+        terra::crs(masterRaster) <- "PROJCRS[\"Lambert_Conformal_Conic_2SP\",\n    BASEGEOGCRS[\"GCS_GRS_1980_IUGG_1980\",\n        DATUM[\"D_unknown\",\n            ELLIPSOID[\"GRS80\",6378137,298.257222101,\n                LENGTHUNIT[\"metre\",1,\n                    ID[\"EPSG\",9001]]]],\n        PRIMEM[\"Greenwich\",0,\n            ANGLEUNIT[\"degree\",0.0174532925199433,\n                ID[\"EPSG\",9122]]]],\n    CONVERSION[\"Lambert Conic Conformal (2SP)\",\n        METHOD[\"Lambert Conic Conformal (2SP)\",\n            ID[\"EPSG\",9802]],\n        PARAMETER[\"Latitude of false origin\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8821]],\n        PARAMETER[\"Longitude of false origin\",-95,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8822]],\n        PARAMETER[\"Latitude of 1st standard parallel\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8823]],\n        PARAMETER[\"Latitude of 2nd standard parallel\",77,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8824]],\n        PARAMETER[\"Easting at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8826]],\n        PARAMETER[\"Northing at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8827]]],\n    CS[Cartesian,2],\n        AXIS[\"easting\",east,\n            ORDER[1],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]],\n        AXIS[\"northing\",north,\n            ORDER[2],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]]]"
+        masterRaster[] <- rep(1, terra::ncell(masterRaster))
+        mr <- reproducible::prepInputs(targetFile = file.path(attr(out$paths,"extraPaths")$inputScott, "ldSp_TestArea.tif"),
+                                       destinationPath = ".",
+                                       to = masterRaster,
+                                       method = "near")
+        mr[mr[] == 0] <- NA
+        sim$masterRaster <- mr
+      }
 
     }
-    sim$masterRaster[sim$masterRaster == 0] <- NA
-  }
-
+##CELINE HERE
   # 2. Age raster from inventory
   if (!suppliedElsewhere(sim$ageRaster)) {
     if (!suppliedElsewhere(sim$ageRasterURL)) {
