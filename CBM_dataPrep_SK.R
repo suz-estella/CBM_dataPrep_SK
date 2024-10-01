@@ -244,7 +244,7 @@ Init <- function(sim) {
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
   ##
-
+browser()
   io <- inputObjects(sim, currentModule(sim))
   objectNamesExpected <- io$objectName
   available <- objectNamesExpected %in% ls(sim)
@@ -266,7 +266,7 @@ Init <- function(sim) {
 
   if(!suppliedElsewhere(sim$spatialDT)){
     spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(growth_curve_id),]
-  }
+  } else spatialDT <- sim$spatialDT
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
   setkeyv(spatialDT, "pixelIndex")
@@ -659,7 +659,7 @@ browser()
       if (!suppliedElsewhere(sim$gcIndexRasterURL)) {
         sim$gcIndexRasterURL <- extractURL("gcIndexRaster")
       }
-      sim$gcIndexRaster <- prepInputs()
+      sim$gcIndexRaster <- prepInputs(
                                  url = sim$gcIndexRasterURL,
                                  fun = "terra::rast",
                                  to = sim$masterRaster,
