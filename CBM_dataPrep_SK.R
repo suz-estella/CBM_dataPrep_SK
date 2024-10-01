@@ -644,7 +644,7 @@ browser()
     if (!suppliedElsewhere(sim$ageRasterURL)) {
       sim$ageRasterURL <- extractURL("ageRaster")
     }
-    sim$ageRaster <- prepInputs()
+    sim$ageRaster <- prepInputs(
                            url = sim$ageRasterURL,
                            fun = "terra::rast",
                            to = sim$masterRaster,
