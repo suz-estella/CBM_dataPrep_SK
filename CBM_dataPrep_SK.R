@@ -15,7 +15,7 @@ defineModule(sim, list(
   documentation = list("CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
     "data.table", "terra","fasterize", "magrittr", "raster", "RSQLite", "sf",
-    "PredictiveEcology/CBMutils@development",
+    "PredictiveEcology/CBMutils@development (HEAD)",
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
@@ -415,7 +415,7 @@ browser()
     if (mySpuDmids$distName[i] == "clearcut") {
       dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
     } else {
-      getDist <- listDist[grep(mySpuDmids$distName[i], listDist[, 3], ignore.case = TRUE), 1:2]
+      getDist <- listDist[grep(mySpuDmids$distName[i], listDist[, 4], ignore.case = TRUE), 1:2]
       getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
       dmid[i, ] <- getDist[1, ]
     }
