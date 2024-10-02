@@ -244,7 +244,7 @@ Init <- function(sim) {
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
   ##
-browser()
+
   io <- inputObjects(sim, currentModule(sim))
   objectNamesExpected <- io$objectName
   available <- objectNamesExpected %in% ls(sim)
@@ -266,22 +266,25 @@ browser()
 
   if(!suppliedElsewhere(sim$spatialDT)){
     spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(growth_curve_id),]
-  } else spatialDT <- sim$spatialDT
+  }
+
+  spatialDT <- sim$spatialDT
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
   setkeyv(spatialDT, "pixelIndex")
-  spatialDT$pixelGroup <- Cache(LandR::generatePixelGroups, spatialDT,
+  if(!"pixelGroup" %in% names(spatialDT)){
+     spatialDT$pixelGroup <- LandR::generatePixelGroups(spatialDT,
                                 maxPixelGroup = 0,
-                                columns = c("ages", "spatial_unit_id", "growth_curve_component_id", "ecozones")
-  )
+                                columns = c("ages", "spatial_unit_id", "gcids", "ecozones")
+    )
+  }
   setkeyv(spatialDT, "pixelIndex")
 
   spatialDT <- spatialDT[, .(
     ages, spatial_unit_id, pixelIndex,
-    growth_curve_component_id, growth_curve_id, ecozones, pixelGroup
+    gcids, ecozones, pixelGroup
   )]
   setkeyv(spatialDT, "pixelIndex")
-  # spatialDT <- spatialDT[order(pixelIndex), ]
   sim$spatialDT <- spatialDT
   # end create pixel groups-------------
 
@@ -296,8 +299,8 @@ browser()
   # in the SK runs, each pixels has a unique growth curve, the ecozone does not
   # change the parameters (they do in other project likes the RIA). So only one
   # column is needed for creating the $gcids as a factor
-  sim$curveID <- c("growth_curve_component_id") #, "ecozones" # "id_ecozone"
-  ##TODO: add to metadata -- use in multiple modules
+  sim$curveID <- c("gcids") #, "ecozones" # "id_ecozone"
+  ##TODO add to metadata -- use in multiple modules
   curveID <- sim$curveID
 
   ##TODO CBMutils::gcidsCreate
@@ -309,11 +312,10 @@ browser()
 
   sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
   set(level3DT, NULL, "gcids", sim$gcids)
-  sim$level3DT <- level3DT
 
   ## End data.table for simulations-------------------------------------------
 
-  ###HERE
+
   ## TODO: problem with ages<=1
   ##################################################### # SK example: can't seem
   # in SK: to solve why growth curve id 52 (white birch, good # productivity) will not
@@ -329,34 +331,31 @@ browser()
   ## TOOLS TO DEBUG C++ Spinup() fnct
   #level3DT <- level3DT[ages>0,]
 
-  sim$realAges <- sim$level3DT[, ages]
-  sim$level3DT[ages <= 3, ages := 3]
+  sim$realAges <- level3DT[, ages]
+  level3DT[ages <= 3, ages := 3]
   ## TOOLS TO DEBUG C++ Spinup() fnct
   #sim$gcids <- sim$level3DT$gcids
 
-  setorderv(sim$level3DT, "pixelGroup")
+  setorderv(level3DT, "pixelGroup")
 
 
   ## Creating all the vectors for the spinup --------------------------------
-  sim$ages <- sim$level3DT[, ages]
-  sim$nStands <- length(sim$ages)
-  sim$pools <- matrix(ncol = sim$poolCount, nrow = sim$nStands, data = 0)
-  colnames(sim$pools) <- sim$pooldef
-  sim$pools[, "Input"] <- rep(1.0, nrow(sim$pools))
-  sim$delays <- rep.int(0, sim$nStands)
-  sim$minRotations <- rep.int(10, sim$nStands)
-  sim$maxRotations <- rep.int(30, sim$nStands)
-  setkeyv(sim$level3DT, "spatial_unit_id")
-  spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 7)]) ##TODO columns were changed to fit the appropriate columns from sim$spinupSQL
+  ##TODO ##HERE Do we need all these vectors for the spinup?? Check CBM_core.
+   if(!suppliedElsewhere(sim$delays)){
+     sim$delays <- rep.int(0, dim(level3DT)[1])
+     ##TODO insert message saying that regen delays are set at 0
+  }
+
+  setkeyv(level3DT, "spatial_unit_id")
+  spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 7)])
+
   setkeyv(spinupParameters,"id")
   spinupParameters <- setNames(spinupParameters, replace(names(spinupParameters), names(spinupParameters) == 'id', 'spatial_unit_id'))
-  retInt <- merge.data.table(sim$level3DT, spinupParameters,
+  retInt <- merge.data.table(level3DT, spinupParameters,
                              by = "spatial_unit_id", all.x = TRUE)
   setkeyv(retInt, "pixelGroup")
-  setkeyv(sim$level3DT, "pixelGroup")
-  sim$returnIntervals <- retInt[, "return_interval"]
-  sim$spatialUnits <- sim$level3DT[, spatial_unit_id]
-  sim$ecozones <- sim$level3DT$ecozones
+  setkeyv(level3DT, "pixelGroup")
+  sim$level3DT <- retInt
 
   ################################################################################
   ## matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
