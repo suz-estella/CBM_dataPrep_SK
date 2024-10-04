@@ -379,12 +379,11 @@ browser()
   # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
   # spatial unit with the name of the disturbance in the 3rd colum.
   listDist <- spuDist(spu, sim$dbPath)
-  ##TODO: error when running new cbm_defaults:
-  ## Error in `[.data.frame`(cbmTables[[7]], which(cbmTables[[7]][, 1] %in%  :
-  ## undefined columns selected.
-  # error occurs at this point in the spuDist function:
-  ## dmid <- unique(cbmTables[[7]][which(cbmTables[[7]][, 1] %in%
-  #  mySpu), c(1, 3)])
+
+  ##TODO make this more generalized so user can customize this to their study
+  ##area
+  ##TODO this is a section that needs to change as we figure out if
+  ##disturbance_type_id needs to be used here instead of disturbance_matrix_id
 
   ## Example specific for SK (as per Boisvenue et al 2016)
   # Disturbances are from White and Wulder and provided as yearly rasters
@@ -399,41 +398,40 @@ browser()
   # simulation, each disturbance has to have one one disturbance matrix id
   # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
-  distName <- c(rep(userDist$distName, length(spu)))
-  rasterID <- c(rep(userDist$rasterID, length(spu)))
-  wholeStand <- c(rep(userDist$wholeStand, length(spu)))
-  spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
+  if(!suppliedElsewhere(sim$mySpuDmids)){
+    distName <- c(rep(userDist$distName, length(spu)))
+    rasterID <- c(rep(userDist$rasterID, length(spu)))
+    wholeStand <- c(rep(userDist$wholeStand, length(spu)))
+    spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
 
-  mySpuDmids <- data.table(distName, rasterID, spatial_unit_id, wholeStand)
+    mySpuDmids <- data.table(distName, rasterID, spatial_unit_id, wholeStand)
 
-  dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
+    #dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
+    dmType <- data.frame(spatial_unit_id = integer(), disturbance_type_id = integer())
 
-  for (i in 1:length(mySpuDmids$distName)) {
-    ### DANGER HARD CODED FIXES
-    ## TODO: present the user with options that live in listDist for the
-    ## specific spu or in sim$cbmData@disturbanceMatrix
-    if (mySpuDmids$distName[i] == "clearcut") {
-      dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
-    } else {
-      getDist <- listDist[grep(mySpuDmids$distName[i], listDist[, 4], ignore.case = TRUE), 1:2]
-      getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
-      dmid[i, ] <- getDist[1, ]
+    for (i in 1:length(mySpuDmids$distName)) {
+      ### DANGER HARD CODED FIXES
+      ## TODO: present the user with options that live in listDist for the
+      ## specific spu or in sim$cbmData@disturbanceMatrix
+      if (mySpuDmids$distName[i] == "clearcut") {
+        dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
+      } else {
+        getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist[, 4], ignore.case = TRUE), 1:2]
+        getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
+        dmid[i, ] <- getDist[1, ]
+      }
     }
+
+    ## this creates a bunch of warnings here...
+    mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
+    names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
+    sim$mySpuDmids <- mySpuDmids
   }
 
-  ## this creates a bunch of warnings here...
-  mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-  names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
-  sim$mySpuDmids <- mySpuDmids
-  # need to match the historic and last past dist to the spatial unit
-  # DECISION: both the last pass and the historic disturbance will be the same
-  # for these runs
-
   ## TODO: in Canada historic DMIDs will always be fire, but the last past may
-  ## not, it could be harvest. Make this optional and give the user a message
-  ## saying these are the defaults.
-
-  # sim$mySpuDmids <- fread(file.path("data", "mySpuDmids.csv"))
+  ## not, it could be harvest. Make this optional (the user being able to pick
+  ## the historical and last pass disturbance). If defaults are picked (fire for
+  ## both), write the user a message saying these are the defaults.
 
   mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
 
