@@ -423,8 +423,8 @@ browser()
     }
 
     ## this creates a bunch of warnings here...
-    mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-    names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
+    mySpuDmids <- data.table(mySpuDmids, dmType$disturbance_type_id)
+    names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_type_id")
     sim$mySpuDmids <- mySpuDmids
   }
 
