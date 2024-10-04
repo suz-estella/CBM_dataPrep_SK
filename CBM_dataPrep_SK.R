@@ -363,9 +363,7 @@ Init <- function(sim) {
   # Matching disturbances to CBM disturbance matrix id---------------------------------
   # make the disturbance look-up table to the disturbance_matrix_id(s)
   # making sim$mySpuDmids
-
   userDist <- sim$userDist
-browser()
   # Most cases will only require fire (wildfire) and a clearcut. There are 426
   # disturbance matrices identified in the archive of CBM
   # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
@@ -378,10 +376,12 @@ browser()
   # spuDist() function is in CBMutils package
   # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
   # spatial unit with the name of the disturbance in the 3rd colum.
+  browser()
   listDist <- spuDist(spu, sim$dbPath)
 
   ##TODO make this more generalized so user can customize this to their study
   ##area
+  ##CAMILLE: isn't this already generalized since spatialDT should be built from user provided rasters?
   ##TODO this is a section that needs to change as we figure out if
   ##disturbance_type_id needs to be used here instead of disturbance_matrix_id
 
@@ -421,11 +421,26 @@ browser()
         dmType[i, ] <- getDist[1, ]
       }
     }
+##CAMILLE: tried using the names/descriptions from matrices3 and those did not work when creating dmType.
+    ## spuDist() now uses the names from matrices6. These are the same names used in sim$disturbanceMatrix.
+    ## Currently, dmType only keeps disturbance_type_id, but this can easily be changed to keep disturbance_matrix_id instead or keep both.
 
     ## this creates a bunch of warnings here...
     mySpuDmids <- data.table(mySpuDmids, dmType$disturbance_type_id)
     names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_type_id")
     sim$mySpuDmids <- mySpuDmids
+
+## CAMILLE: this below is mySpuDmids disturbance_type_id of 1 correctly corresponds to Wildfire and 6 to Deforestation.
+    ## however, 140 corresponds to "Spruce beetle — 20% mortality". There is another similar 20% mortality ID named
+    ## "Generic 20% mortality" with an ID of 168. I assume hte 140 ID gets selected because it comes first, but I'm not sure how we could prioritize the more general X% mortality IDs.
+
+    #         distName  rasterID spatial_unit_id wholeStand disturbance_type_id
+    #           <char>    <int>           <num>      <int>               <num>
+    # 1:      wildfire        1              28          1                   1
+    # 2:      clearcut        2              28          1                 409
+    # 3: deforestation        4              28          1                   7
+    # 4: 20% mortality        3              28          0                 140
+    # 5: 20% mortality        5              28          0                 140
   }
 
   ## TODO: in Canada historic DMIDs will always be fire, but the last past may
