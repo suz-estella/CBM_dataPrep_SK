@@ -357,6 +357,11 @@ Init <- function(sim) {
   setkeyv(level3DT, "pixelGroup")
   sim$level3DT <- retInt
 
+  # create sim$ecozones and sim$spatialUnits to subset vol2biomass growth curves
+  sim$ecozones <- sim$level3DT$ecozones
+  sim$spatialUnits <- sim$level3DT$spatial_unit_id
+
+
   ################################################################################
   ## matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
   ################################################################################
@@ -376,7 +381,6 @@ Init <- function(sim) {
   # spuDist() function is in CBMutils package
   # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
   # spatial unit with the name of the disturbance in the 3rd colum.
-  browser()
   listDist <- spuDist(spu, sim$dbPath)
 
   ##TODO make this more generalized so user can customize this to their study
@@ -449,7 +453,6 @@ Init <- function(sim) {
   ## both), write the user a message saying these are the defaults.
 
   mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
-
   myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
   setkey(myFires, spatial_unit_id)
   setkey(sim$level3DT, spatial_unit_id)
