@@ -414,11 +414,11 @@ browser()
       ## TODO: present the user with options that live in listDist for the
       ## specific spu or in sim$cbmData@disturbanceMatrix
       if (mySpuDmids$distName[i] == "clearcut") {
-        dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
+        dmType[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
       } else {
-        getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist[, 4], ignore.case = TRUE), 1:2]
+        getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist$name, ignore.case = TRUE), 1:2]
         getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
-        dmid[i, ] <- getDist[1, ]
+        dmType[i, ] <- getDist[1, ]
       }
     }
 
