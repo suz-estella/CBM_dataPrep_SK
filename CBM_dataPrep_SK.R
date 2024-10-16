@@ -15,7 +15,7 @@ defineModule(sim, list(
   documentation = list("CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
     "data.table", "terra","fasterize", "magrittr", "raster", "RSQLite", "sf",
-    "PredictiveEcology/CBMutils@development (HEAD)",
+    "PredictiveEcology/CBMutils@celineTest (HEAD)",
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
@@ -385,7 +385,6 @@ Init <- function(sim) {
 
   ##TODO make this more generalized so user can customize this to their study
   ##area
-  ##CAMILLE: isn't this already generalized since spatialDT should be built from user provided rasters?
   ##TODO this is a section that needs to change as we figure out if
   ##disturbance_type_id needs to be used here instead of disturbance_matrix_id
 
@@ -402,7 +401,11 @@ Init <- function(sim) {
   # simulation, each disturbance has to have one one disturbance matrix id
   # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
-  if(!suppliedElsewhere(sim$mySpuDmids)){
+##CELINE HERE: trying to make mySpyDmids from userDist
+  #if(!suppliedElsewhere(sim$mySpuDmids)){
+    ##repeating each user identified disturbance name for each spu, adding the
+    ##user defined link between the disturbance type and the provided raster (or
+    ##spatial layer), adding the user specified wholeStand flag.
     distName <- c(rep(userDist$distName, length(spu)))
     rasterID <- c(rep(userDist$rasterID, length(spu)))
     wholeStand <- c(rep(userDist$wholeStand, length(spu)))
@@ -411,56 +414,62 @@ Init <- function(sim) {
     mySpuDmids <- data.table(distName, rasterID, spatial_unit_id, wholeStand)
 
     #dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
-    dmType <- data.frame(spatial_unit_id = integer(), disturbance_type_id = integer())
+    dmType <- data.frame(disturbance_type_id = integer(),
+                         spatial_unit_id = integer(),
+                         disturbance_matrix_id = integer(),
+                         name = character(),
+                         description = character())
 
-    for (i in 1:length(mySpuDmids$distName)) {
-      ### DANGER HARD CODED FIXES
+ #   for (i in 1:length(mySpuDmids$distName)) {
+
       ## TODO: present the user with options that live in listDist for the
       ## specific spu or in sim$cbmData@disturbanceMatrix
-      if (mySpuDmids$distName[i] == "clearcut") {
-        dmType[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
-      } else {
-        getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist$name, ignore.case = TRUE), 1:2]
-        getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
-        dmType[i, ] <- getDist[1, ]
-      }
-    }
-##CAMILLE: tried using the names/descriptions from matrices3 and those did not work when creating dmType.
-    ## spuDist() now uses the names from matrices6. These are the same names used in sim$disturbanceMatrix.
-    ## Currently, dmType only keeps disturbance_type_id, but this can easily be changed to keep disturbance_matrix_id instead or keep both.
+      ## Start with code below. For SK, Celine selected:
+      ##   disturbance_type_id spatial_unit_id disturbance_matrix_id                                name
+      ##1                   1              28                   371                            Wildfire
+      ##2                 204              28                   160 Clearcut harvesting without salvage
+      ##3                   7              28                    26 Deforestation
+      ##4                 168              28                    91 Generic 20% mortality Generic 20% mortality
+      ### DANGER HARD CODED FIXES:
+      distMatid <- c(371, 160, 26, 91)
+      match1 <- listDist[disturbance_matrix_id %in% distMatid,]
+      match2 <- match1[c(4,3,1,2,2),]
+      sim$mySpuDmids <- cbind(mySpuDmids, match2[,-2])
+      #
+      # if (mySpuDmids$distName[i] == "clearcut") {
+      #   ##there is most likely more than one clearcut
+      #   getCut <- listDist[grep("clear", listDist$name, ignore.case = TRUE), ]
+      #   ##TODO here is where a message to the user with the name and description
+      #   ##columns so they can choose which fits better to there management
+      #   ##interventions.
+      #
+      #   dmType[i, ] <- getCut[4,]
+      # } else {
+      #   getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist$name, ignore.case = TRUE), ]
+      #   ## Next line is if there are more then one spu
+      #   getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
+      #   dmType[i, ] <- getDist[1, ]
+      # }
+  #  }
 
-    ## this creates a bunch of warnings here...
-    mySpuDmids <- data.table(mySpuDmids, dmType$disturbance_type_id)
-    names(mySpuDmids) <- c("distName", "rasterID", "spatial_unit_id", "wholeStand", "disturbance_type_id")
-    sim$mySpuDmids <- mySpuDmids
 
-## CAMILLE: this below is mySpuDmids disturbance_type_id of 1 correctly corresponds to Wildfire and 6 to Deforestation.
-    ## however, 140 corresponds to "Spruce beetle — 20% mortality". There is another similar 20% mortality ID named
-    ## "Generic 20% mortality" with an ID of 168. I assume hte 140 ID gets selected because it comes first, but I'm not sure how we could prioritize the more general X% mortality IDs.
+ # }
 
-    #         distName  rasterID spatial_unit_id wholeStand disturbance_type_id
-    #           <char>    <int>           <num>      <int>               <num>
-    # 1:      wildfire        1              28          1                   1
-    # 2:      clearcut        2              28          1                 409
-    # 3: deforestation        4              28          1                   7
-    # 4: 20% mortality        3              28          0                 140
-    # 5: 20% mortality        5              28          0                 140
-  }
-
-  ## TODO: in Canada historic DMIDs will always be fire, but the last past may
+  ## TODO: in Canada historic disturbance will always be fire, but the last past may
   ## not, it could be harvest. Make this optional (the user being able to pick
   ## the historical and last pass disturbance). If defaults are picked (fire for
   ## both), write the user a message saying these are the defaults.
 
-  mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
-  myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
-  setkey(myFires, spatial_unit_id)
-  setkey(sim$level3DT, spatial_unit_id)
-  # this is mainly to make them the same length at the number of pixel groups
-  histLastDMIDs <- merge(sim$level3DT, myFires)
-  sim$historicDMIDs <- histLastDMIDs$disturbance_matrix_id
+  ##to remove...
+  # mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
+  # myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
+  # setkey(myFires, spatial_unit_id)
+  # setkey(sim$level3DT, spatial_unit_id)
+
+  ###DANGER HARDCODED
+  sim$historicDMtype <- rep(sim$mySpuDmids[1,]$disturbance_type_id, dim(sim$level3DT)[1])
   ## TODO: this is where it could be something else then fire
-  sim$lastPassDMIDS <- histLastDMIDs$disturbance_matrix_id
+  sim$lastPassDMtype <- sim$historicDMtype
 
   # ! ----- STOP EDITING ----- ! #
 
