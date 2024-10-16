@@ -465,7 +465,6 @@ Init <- function(sim) {
   # myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
   # setkey(myFires, spatial_unit_id)
   # setkey(sim$level3DT, spatial_unit_id)
-
   ###DANGER HARDCODED
   sim$historicDMtype <- rep(sim$mySpuDmids[1,]$disturbance_type_id, dim(sim$level3DT)[1])
   ## TODO: this is where it could be something else then fire
