@@ -164,12 +164,12 @@ defineModule(sim, list(
       desc = "The identification of which growth curves to use on the specific stands provided by the user."
     ),
     createsOutput(
-      objectName = "historicDMIDs", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating historical disturbance type, linked to the S4 table called `cbmData`. Only Spinup."
+      objectName = "historicDMtype", objectClass = "numeric",
+      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."
     ),
     createsOutput(
-      objectName = "lastPassDMIDS", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating final disturbance type, linked to the S4 table called `cbmData`. Only Spinup."
+      objectName = "lastPassDMtype", objectClass = "numeric",
+      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."
     ),
     createsOutput(
       objectName = "delays", objectClass = "numeric",
