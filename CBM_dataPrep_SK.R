@@ -365,7 +365,7 @@ Init <- function(sim) {
   speciesPixelGroup <- sim$gcMeta[sim$species_tr, on = .(species = name)]
   speciesPixelGroup <- speciesPixelGroup[gcids >= 1,]
   speciesPixelGroup <- speciesPixelGroup[,.(gcids, species_id)]
-  speciesPixelGroup <- speciesPixelGroup[spatialDT, on = .(gcids=gcids)]
+  speciesPixelGroup <- speciesPixelGroup[sim$spatialDT, on = .(gcids=gcids)]
   speciesPixelGroup <- unique(speciesPixelGroup[,.(pixelGroup, species_id)])
   sim$speciesPixelGroup <- speciesPixelGroup
 
