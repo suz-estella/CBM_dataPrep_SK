@@ -361,6 +361,13 @@ Init <- function(sim) {
   sim$ecozones <- sim$level3DT$ecozones
   sim$spatialUnits <- sim$level3DT$spatial_unit_id
 
+  # create sim$speciesPixelGroup
+  speciesPixelGroup <- sim$gcMeta[sim$species_tr, on = .(species = name)]
+  speciesPixelGroup <- speciesPixelGroup[gcids >= 1,]
+  speciesPixelGroup <- speciesPixelGroup[,.(gcids, species_id)]
+  speciesPixelGroup <- speciesPixelGroup[spatialDT, on = .(gcids=gcids)]
+  speciesPixelGroup <- unique(speciesPixelGroup[,.(pixelGroup, species_id)])
+  sim$speciesPixelGroup <- speciesPixelGroup
 
   ################################################################################
   ## matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
