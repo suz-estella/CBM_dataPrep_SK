@@ -296,19 +296,9 @@ Init <- function(sim) {
 
   level3DT <- unique(spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
-  # in the SK runs, each pixels has a unique growth curve, the ecozone does not
-  # change the parameters (they do in other project likes the RIA). So only one
-  # column is needed for creating the $gcids as a factor
   sim$curveID <- c("gcids") #, "ecozones" # "id_ecozone"
   ##TODO add to metadata -- use in multiple modules
   curveID <- sim$curveID
-
-  ##TODO CBMutils::gcidsCreate
-  # Error: 'gcidsCreate' is not an exported object from 'namespace:CBMutils'
-  # work around until Alex can fix it, putting this in global
-  # gcidsCreate <- function(...) {
-  #   do.call(paste, c(list(...)[[1]], sep= "_"))
-  # }
 
   sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
   set(level3DT, NULL, "gcids", sim$gcids)
@@ -317,7 +307,7 @@ Init <- function(sim) {
 
 
   ## TODO: problem with ages<=1
-  ##################################################### # SK example: can't seem
+  #####################################################
   # in SK: to solve why growth curve id 52 (white birch, good # productivity) will not
   #run with ages= c(0,1,2) it gets stuck in the spinup need to set ages to 3. Tried ages==1, and
   #ages==2. Maybe because the first few years of growth are 0 ? (to check) it
@@ -328,8 +318,6 @@ Init <- function(sim) {
   # in RIA: won't run for ages 0 or 1 with growth 0, had to change it to two
   # realAges are used to restore the correct ages in CBM_core postspinup event
   ######################################
-  ## TOOLS TO DEBUG C++ Spinup() fnct
-  #level3DT <- level3DT[ages>0,]
 
   sim$realAges <- level3DT[, ages]
   level3DT[ages <= 3, ages := 3]
@@ -340,7 +328,7 @@ Init <- function(sim) {
 
 
   ## Creating all the vectors for the spinup --------------------------------
-  ##TODO ##HERE Do we need all these vectors for the spinup?? Check CBM_core.
+  ##TODO Do we need all these vectors for the spinup?? Check CBM_core.
    if(!suppliedElsewhere(sim$delays)){
      sim$delays <- rep.int(0, dim(level3DT)[1])
      ##TODO insert message saying that regen delays are set at 0
@@ -395,18 +383,6 @@ Init <- function(sim) {
   ##TODO this is a section that needs to change as we figure out if
   ##disturbance_type_id needs to be used here instead of disturbance_matrix_id
 
-  ## Example specific for SK (as per Boisvenue et al 2016)
-  # Disturbances are from White and Wulder and provided as yearly rasters
-  # raster values 1 to 5
-  # #C:\Celine\GitHub\CBM_\data\forIan\SK_data\disturbance_Sask\ReadMe.txt
-  # # Fire =  1
-  # # Harvest = 2
-  # # Lcondition = 3
-  # # Road = 4
-  # # Unclass = 5
-  # Whatever number of disturbances identified that will be used in the
-  # simulation, each disturbance has to have one one disturbance matrix id
-  # associated with it.
   # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
 ##CELINE HERE: trying to make mySpyDmids from userDist
   #if(!suppliedElsewhere(sim$mySpuDmids)){
