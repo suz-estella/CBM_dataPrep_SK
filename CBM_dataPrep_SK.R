@@ -264,11 +264,9 @@ Init <- function(sim) {
   #   )
   # }
 
-  if(!suppliedElsewhere(sim$spatialDT)){
-    spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(growth_curve_id),]
-  }
 
-  spatialDT <- sim$spatialDT
+  spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(gcids),]
+
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
   setkeyv(spatialDT, "pixelIndex")
@@ -644,11 +642,11 @@ Init <- function(sim) {
         sim$ageRasterURL <- extractURL("ageRaster")
       }
       sim$ageRaster <- prepInputs(
-                             url = sim$ageRasterURL,
-                             fun = "terra::rast",
-                             to = sim$masterRaster,
-                             method = "near", # need integers
-                             destinationPath = dPath
+        url = sim$ageRasterURL,
+        fun = "terra::rast",
+        to = sim$masterRaster,
+        method = "near", # need integers
+        destinationPath = inputPath(sim)
       )|> Cache()
       ## TODO: put in a message to out pointing the max age (this has to be
       ## sinked to the max age on the growth curve max age for the spinup)
@@ -666,97 +664,97 @@ Init <- function(sim) {
         sim$gcIndexRasterURL <- extractURL("gcIndexRaster")
       }
       sim$gcIndexRaster <- prepInputs(
-                                 url = sim$gcIndexRasterURL,
-                                 fun = "terra::rast",
-                                 to = sim$masterRaster,
-                                 method = "near", # need integers
-                                 destinationPath = dPath)|> Cache()
+        url = sim$gcIndexRasterURL,
+        fun = "terra::rast",
+        to = sim$masterRaster,
+        method = "near", # need integers
+        destinationPath = inputPath(sim))|> Cache()
     }
   }
 
   # 4. Spatial Unit raster. This takes the masterRaster (study area) and figures
   # out what CBM-specific spatial units each pixels. This determines some
   # defaults CBM-parameters across Canada.
-  if(!suppliedElsewhere(sim$spatialUnits)){
-    if (!suppliedElsewhere(sim$spuRaster)) {
-      ##TODO Need to check that there SPU match what the CAT is using.
-      # The current PSPU data for the CAT is here:
-      #\\vic-fas2\cat\NFCMARS_admin\Data\SpatialFramework\PSPUS.zip
-      # - Scott put that same shapefile on a googleDrive here is a link to PSPUS.zip
-      # https://drive.google.com/file/d/1Z_pMwhylqMkKZfOArATaAz9pUVNXtBAd/view?usp=sharing
-      # - we need to compare those two files.
-      canadaSpu <- prepInputs(
-                              targetFile = "spUnit_Locator.shp",
-                              url = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed",
-                              destinationPath = dPath,
-                              alsoExtract = "similar")|> Cache()
+  # if(!suppliedElsewhere(sim$spatialUnits)){
+  if (!suppliedElsewhere(sim$spuRaster)) {
+    ##TODO Need to check that there SPU match what the CAT is using.
+    # The current PSPU data for the CAT is here:
+    #\\vic-fas2\cat\NFCMARS_admin\Data\SpatialFramework\PSPUS.zip
+    # - Scott put that same shapefile on a googleDrive here is a link to PSPUS.zip
+    # https://drive.google.com/file/d/1Z_pMwhylqMkKZfOArATaAz9pUVNXtBAd/view?usp=sharing
+    # - we need to compare those two files.
+    canadaSpu <- prepInputs(
+      targetFile = "spUnit_Locator.shp",
+      url = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed",
+      destinationPath = inputPath(sim),
+      alsoExtract = "similar")|> Cache()
 
-      spuShp <- Cache(postProcess,
-                      canadaSpu,
-                      to = sim$masterRaster,
-                      method = "near", # need integers
-                      #targetCRS = terra::crs(sim$masterRaster),
-                      useCache = FALSE, filename2 = NULL
-      ) |> st_collection_extract("POLYGON")
+    spuShp <- Cache(postProcess,
+                    canadaSpu,
+                    to = sim$masterRaster,
+                    method = "near", # need integers
+                    #targetCRS = terra::crs(sim$masterRaster),
+                    useCache = FALSE, filename2 = NULL
+    ) |> st_collection_extract("POLYGON")
 
-      sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
-                                        terra::rast(sim$masterRaster),
-                                        field = "spu_id") |> raster::raster()
-    }
+    sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
+                                      terra::rast(sim$masterRaster),
+                                      field = "spu_id") |> raster::raster()
   }
+  # }
 
   # 5. Ecozone raster. This takes the masterRaster (study area) and figures
   # out what ecozones each pixels are in. This determines some
   # defaults CBM-parameters across Canada.
-  if(!suppliedElsewhere(sim$ecozones)){
-    if (!suppliedElsewhere(sim$ecoRaster)) {
-      ecozones <- Cache(prepInputs,
-                        url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-                        alsoExtract = "similar",
-                        destinationPath = dPath,
-                        filename1 = "ecozone_shp.zip",
-                        # overwrite = TRUE, ## not needed if filename1 specified
-                        fun = "sf::st_read", #"terra::vect",
-                        rasterToMatch = sim$masterRaster
-      ) ## ecozones is a SpatVect class object
-      ## TODO: terra::vect fails on some windows machines. Windows does not
-      ## recognize some of the french characters.
-      # ecozones <- terra::vect(ecozones)
+  # if(!suppliedElsewhere(sim$ecozones)){
+  if (!suppliedElsewhere(sim$ecoRaster)) {
+    ecozones <- Cache(prepInputs,
+                      url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                      alsoExtract = "similar",
+                      destinationPath = inputPath(sim),
+                      filename1 = "ecozone_shp.zip",
+                      # overwrite = TRUE, ## not needed if filename1 specified
+                      fun = "sf::st_read", #"terra::vect",
+                      rasterToMatch = sim$masterRaster
+    ) ## ecozones is a SpatVect class object
+    ## TODO: terra::vect fails on some windows machines. Windows does not
+    ## recognize some of the french characters.
+    # ecozones <- terra::vect(ecozones)
 
-      sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
-    }
-
-
-    ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
-    if (any(is.na(values(sim$ecoRaster)))) {
-      stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
-    }
-
-    dtRasters <- as.data.table(cbind(ages = sim$ageRaster[],
-                                     spatial_unit_id = sim$spuRaster[],
-                                     gcids = sim$gcIndexRaster[],
-                                     ecozones = sim$ecoRaster[]
-                                     ))
-
-    # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
-    if (isTRUE(P(sim)$doAssertions)) {
-      bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
-      if (!all(names(table(bbb)) %in% c("0", "4")))
-        stop("should be only 0 or 4s")
-    }
+    sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
+  }
+  # }
 
 
-    ## There seems to be a caching problem here, the name adjustments
 
-    ##
-    sim$allPixDT <- as.data.table(cbind(dtRasters,
-                                        pixelIndex = 1:ncell(sim$gcIndexRaster)))
+  ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
+  if (any(is.na(values(sim$ecoRaster)))) {
+    stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
+  }
+
+  dtRasters <- as.data.table(cbind(ages = sim$ageRaster[][,1],
+                                   spatial_unit_id = sim$spuRaster[],
+                                   gcids = sim$gcIndexRaster[][,1],
+                                   ecozones = sim$ecoRaster[][,1]
+  ))
+
+  # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
+  if (isTRUE(P(sim)$doAssertions)) {
+    bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
+    if (!all(names(table(bbb)) %in% c("0", "4")))
+      stop("should be only 0 or 4s")
+  }
+
+  ## There seems to be a caching problem here, the name adjustments
+  ##
+  sim$allPixDT <- as.data.table(cbind(dtRasters,
+                                      pixelIndex = 1:ncell(sim$gcIndexRaster)))
 
     ##TODO get rid of this name change but keeping it to track "wrong names" through the scripts.
     # chgNamesTo <- c("growth_curve_component_id", "ages", "ecozones", "spatial_unit_id",
     #                 "pixelIndex", "growth_curve_id")
     # setnames(sim$allPixDT,names(sim$allPixDT),chgNamesTo)
-  }
+
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for each year.
   #    But these can be provided by another family of modules in the annual event.
