@@ -554,27 +554,17 @@ Init <- function(sim) {
   # this may be provided by the user, by the defaults or by other modules/family
   # of modules. It is the link between the spatial location of the disturbance
   # (like a raster value) and the disturbance name.
-  if (!suppliedElsewhere(sim$userDist)) {
+  if (!suppliedElsewhere("userDist", sim)) {
     if (!suppliedElsewhere(sim$userDistFile)) {
       message("There is no disturbance information provided; defaults for the Saskatchewan example run will be used.")
 
-      ## TODO: workaround failing prepInputs call (reproducible/issues/287)
-      # sim$userDist <- prepInputs(url = extractURL("userDist"),
-      #                            destinationPath = dPath,
-      #                            fun = "data.table::fread")
-      if (!file.exists(file.path(dPath, "userDist.csv"))) {
-        userDistURL <- extractURL("userDist")
-      }
-        #drive_download(as_id(extractURL("userDist")),
-      #                  path = file.path(dPath, "userDist.csv"),
-      #                  type = "spreadsheet")
-      sim$userDist <- prepInputs(url = userDistURL,
-                                 destinationPath = inputPath(sim),
-                                 targetFile = "userDist.csv",
-                                 fun = "data.table::fread")
-      }
-    else {
-      sim$userDist <- fread(sim$userDistFile)
+    if (!suppliedElsewhere("userDistURL", sim)) {
+      sim$userDistURL <- extractURL("userDist")
+    }
+    sim$userDist <- prepInputs(url = sim$userDistURL,
+                               targetFile = "userDist.csv",
+                               destinationPath = inputPath(sim),
+                               fun = fread)
     }
   }
 
