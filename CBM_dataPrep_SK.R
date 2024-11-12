@@ -208,6 +208,10 @@ defineModule(sim, list(
     createsOutput(
       objectName = "mySpuDmids", objectClass = "data.frame",
       desc = "the table containing one line per pixel"
+    ),
+    createsOutput(
+      objectName = "speciesPixelGroup", objectClass = "data.frame",
+      desc = "This table connects species codes to PixelGroups"
     )
   )
 ))
