@@ -580,7 +580,7 @@ Init <- function(sim) {
     }
     sim$cbmAdmin <- prepInputs(url = sim$cbmAdminURL,
                                targetFile = "cbmAdmin.csv",
-                               destinationPath = "inputs",
+                               destinationPath = inputPath(sim),
                                fun = fread)
   }
 
@@ -622,7 +622,7 @@ Init <- function(sim) {
       sim$masterRaster <- prepInputs(
         url = sim$masterRasterURL,
         fun = "terra::rast",
-        destinationPath = dPath
+        destinationPath = inputPath(sim)
       )|> Cache()
 
         }
