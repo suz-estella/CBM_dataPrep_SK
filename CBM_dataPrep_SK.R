@@ -45,9 +45,10 @@ defineModule(sim, list(
       )
     )
   ),
+
   inputObjects = bindrows(
-    expectsInput(
-      objectName = "dbPath", objectClass = "character", desc = NA, sourceURL = NA), # FROM DEFAULTS
+    expectsInput(objectName = "dbPath", objectClass = "character", desc = NA,
+                 sourceURL = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db"), # FROM DEFAULTS
     expectsInput(
       objectName = "spinupSQL", objectClass = "dataset", desc = NA), # FROM DEFAULTS
     expectsInput(
@@ -108,14 +109,14 @@ defineModule(sim, list(
       desc = "URL for gcIndexRaste - optional, need this or a ageRaster"),
     expectsInput(
       objectName = "spuRaster", objectClass = "raster",
-      desc = "Raster has spatial units for each pixel"
+      desc = "Raster has spatial units for each pixel",
       sourceURL = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed"),
     expectsInput(
       objectName = "spuRasterURL", objectClass = "character",
       desc = "URL for spuRaster"),
     expectsInput(
       objectName = "ecoRaster", objectClass = "raster",
-      desc = "Raster has ecozones for each pixel"
+      desc = "Raster has ecozones for each pixel",
       sourceURL = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"),
     expectsInput(
       objectName = "ecoRasterURL", objectClass = "character",
@@ -124,7 +125,7 @@ defineModule(sim, list(
       objectName = "allPixDT", objectClass = "data.table",
       desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
                    "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)"))
-  )
+  ),
 
   outputObjects = bindrows(
     createsOutput(
