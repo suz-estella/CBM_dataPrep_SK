@@ -47,172 +47,143 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     expectsInput(
-      objectName = "cbmData", objectClass = "dataset",
-      desc = "S4 object created from selective reading in of cbm_default.db in CBM_efaults module",
-      sourceURL = NA #TODO: change to the appropriate file from defaults
-    ),
+      objectName = "dbPath", objectClass = "character", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "pooldef", objectClass = "character",
-      desc = "Vector of names (characters) for each of the carbon pools, with `Input` being the first one",
-      sourceURL = NA
-    ),
+      objectName = "spinupSQL", objectClass = "dataset", desc = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "PoolCount", objectClass = "numeric",
-      desc = "count of the length of the Vector of names (characters) for each of the carbon pools, with `Input` being the first one",
-      sourceURL = NA
-    ),
-    expectsInput(objectName = "dbPath", objectClass = "character", desc = NA, sourceURL = NA),
-    expectsInput(objectName = "sqlDir", objectClass = "character", desc = NA, sourceURL = NA),
+      objectName = "species_tr", objectClass = "dataset", desc = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "userDistFile", objectClass = "character", ## TODO: should be a param
-      desc = paste("User provided file name that identifies disturbances for simulation",
-                   "(key words for searching CBM files, if not there the userDist will be created with defaults"),
-      sourceURL = NA
-    ),
+      objectName = "gcMeta", objectClass = "data.frame",
+      desc = paste("Provides equivalent between provincial boundaries",
+                   "CBM-id for provincial boundaries and CBM-spatial unit ids"),
+      sourceURL =
+        "https://drive.google.com/file/d/189SFlySTt0Zs6k57-PzQMuQ29LmycDmJ/view?usp=sharing"), # FROM VOL2BIOMASS
     expectsInput(
-      objectName = "userDist", objectClass = "data.table",
-      desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
-      sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH"
-    ),
-    expectsInput(
-      objectName = "cbmAdmin", objectClass = "data.frame",
-      desc = paste("Provides equivalent between provincial boundaries,",
-                   "CBM-id for provincial boundaries and CBM-spatial unit ids. This is used in the CBM_vol2biomass module"),
-      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
-    ),
-    expectsInput(
-      objectName = "cbmAdminURL", objectClass = "character",
-      desc = "URL for cbmAdmin"
-    ),
-    expectsInput(
-      objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "URL for ageRaster - optional, need this or a ageRaster"
-    ),
-    expectsInput(
-      objectName = "ageRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1hylk0D1vO19Dpg4zFtnSNhnyYP4j-bEA"
-    ),
-    expectsInput(
-      objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "URL for gcIndexRaste - optional, need this or a ageRaster"
-    ),
-    expectsInput(
-      objectName = "gcIndexRaster", objectClass = "raster",
-      desc = "Raster giving the growth curve value for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"
-    ),
-    expectsInput(
-      objectName = "spuRaster", objectClass = "raster",
-      desc = "Raster has spatial units for each pixel"
-    ),
-    expectsInput(
-      objectName = "ecoRaster", objectClass = "raster",
-      desc = "Raster has ecozones for each pixel"
-    ),
-    expectsInput(
-      objectName = "userGcM3URL", objectClass = "character",
-      desc = "URL for userGcM3"
-    ),
+      objectName = "gcMetaURL", objectClass = "character",
+      desc = "URL for gcMeta"),
     expectsInput(
       objectName = "userGcM3", objectClass = "data.frame",
       desc = paste("User file containing:",
                    "`gcids`, `Age`, `MerchVolume`.",
                    "Default name `userGcM3`."),
-      sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"
-    ),    expectsInput(
-      objectName = "disturbanceRasters", objectClass = "vector",
-      desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
-      sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
-      ## user-navigable here: https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt
-    ),
+      sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"),
     expectsInput(
-      objectName = "masterRasterURL", objectClass = "character",
-      desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."
-    ),
+      objectName = "userGcM3URL", objectClass = "character",
+      desc = "URL for userGcM3"),
     expectsInput(
-      objectName = "allPixDT", objectClass = "data.table",
-      desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
-                   "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)")
-    ),
+      objectName = "userDist", objectClass = "data.table",
+      desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
+      sourceURL = "https://docs.google.com/spreadsheets/d/1fOikb83aOuLlFYIn6pjmC7Jydjcy77TH"),
+    expectsInput(
+      objectName = "userDistURL", objectClass = "character",
+      desc = "URL for userDist"),
+    expectsInput(
+      objectName = "cbmAdmin", objectClass = "data.frame",
+      desc = paste("Provides equivalent between provincial boundaries,",
+                   "CBM-id for provincial boundaries and CBM-spatial unit ids. This is used in the CBM_vol2biomass module"),
+      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"),
+    expectsInput(
+      objectName = "cbmAdminURL", objectClass = "character",
+      desc = "URL for cbmAdmin"),
     expectsInput(
       objectName = "masterRaster", objectClass = "raster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
-      sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"
-    )
-  ),
+      sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"),
+    expectsInput(
+      objectName = "masterRasterURL", objectClass = "character",
+      desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."),
+    expectsInput(
+      objectName = "ageRaster", objectClass = "raster",
+      desc = "Raster ages for each pixel",
+      sourceURL = "https://drive.google.com/file/d/1hylk0D1vO19Dpg4zFtnSNhnyYP4j-bEA"),
+    expectsInput(
+      objectName = "ageRasterURL", objectClass = "character",
+      desc = "URL for ageRaster - optional, need this or a ageRaster"),
+    expectsInput(
+      objectName = "gcIndexRaster", objectClass = "raster",
+      desc = "Raster giving the growth curve value for each pixel",
+      sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"),
+    expectsInput(
+      objectName = "gcIndexRasterURL", objectClass = "character",
+      desc = "URL for gcIndexRaste - optional, need this or a ageRaster"),
+    expectsInput(
+      objectName = "spuRaster", objectClass = "raster",
+      desc = "Raster has spatial units for each pixel"
+      sourceURL = ""),
+    expectsInput(
+      objectName = "spuRasterURL", objectClass = "character",
+      desc = "URL for spuRaster"),
+    expectsInput(
+      objectName = "ecoRaster", objectClass = "raster",
+      desc = "Raster has ecozones for each pixel"
+      sourceURL = ""),
+    expectsInput(
+      objectName = "ecoRasterURL", objectClass = "character",
+      desc = "URL for ecoRaster"),
+    expectsInput(
+      objectName = "allPixDT", objectClass = "data.table",
+      desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
+                   "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)"))
+  )
+
   outputObjects = bindrows(
-    createsOutput(objectName = "pools", objectClass = "matrix", desc = NA), ## TODO
     createsOutput(
-      objectName = "curveID", objectClass = "character",
-      desc = "Vector of column names that together, uniquely define growth curve id"
-    ),
-    createsOutput(
-      objectName = "ages", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"
-    ),
-    createsOutput(
-      objectName = "realAges", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"
-    ),
-    createsOutput(
-      objectName = "nStands", objectClass = "numeric",
-      desc = "not really the number of stands, but the number of pixel groups"
-    ),
-    createsOutput(
-      objectName = "gcids", objectClass = "numeric",
-      desc = "The identification of which growth curves to use on the specific stands provided by the user."
-    ),
-    createsOutput(
-      objectName = "historicDMtype", objectClass = "numeric",
-      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."
-    ),
-    createsOutput(
-      objectName = "lastPassDMtype", objectClass = "numeric",
-      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."
-    ),
-    createsOutput(
-      objectName = "delays", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating regeneration delay post disturbance. Only Spinup."
-    ),
-    createsOutput(
-      objectName = "minRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."
-    ),
-    createsOutput(
-      objectName = "maxRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating maximum number of rotations. Only Spinup."
-    ),
-    createsOutput(
-      objectName = "returnIntervals", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating the fixed fire return interval. Only Spinup."
-    ),
-    createsOutput(
-      objectName = "spatialUnits", objectClass = "numeric",
-      desc = "The id given to the intersection of province and ecozones across Canada, linked to the S4 table called cbmData"
-    ),
-    createsOutput(
-      objectName = "ecozones", objectClass = "numeric",
-      desc = paste("Vector, one for each stand, indicating the numeric representation",
-                   "of the Canadian ecozones, as used in CBM-CFS3")
-    ),
+      objectName = "spatialDT", objectClass = "data.table",
+      desc = "the table containing one line per pixel"),
     createsOutput(
       objectName = "level3DT", objectClass = "data.table",
       desc = paste("the table linking the spu id, with the disturbance_matrix_id and the events.",
-                   "The events are the possible raster values from the disturbance rasters of Wulder and White.")
-    ),
+                   "The events are the possible raster values from the disturbance rasters of Wulder and White.")),
     createsOutput(
-      objectName = "spatialDT", objectClass = "data.table",
-      desc = "the table containing one line per pixel"
-    ),
+      objectName = "curveID", objectClass = "character",
+      desc = "Vector of column names that together, uniquely define growth curve id"),
     createsOutput(
-      objectName = "mySpuDmids", objectClass = "data.frame",
-      desc = "the table containing one line per pixel"
-    ),
+      objectName = "gcids", objectClass = "numeric",
+      desc = "The identification of which growth curves to use on the specific stands provided by the user."),
+    createsOutput(
+      objectName = "realAges", objectClass = "numeric",
+      desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"),
+    createsOutput(
+      objectName = "delays", objectClass = "numeric",
+      desc = "Vector, one for each stand, indicating regeneration delay post disturbance. Only Spinup."),
+    createsOutput(
+      objectName = "ecozones", objectClass = "numeric",
+      desc = paste("Vector, one for each stand, indicating the numeric representation",
+                   "of the Canadian ecozones, as used in CBM-CFS3")),
+    createsOutput(
+      objectName = "spatialUnits", objectClass = "numeric",
+      desc = "The id given to the intersection of province and ecozones across Canada, linked to the S4 table called cbmData"), # TODO: description out of date
     createsOutput(
       objectName = "speciesPixelGroup", objectClass = "data.frame",
-      desc = "This table connects species codes to PixelGroups"
-    )
+      desc = "This table connects species codes to PixelGroups"),
+    createsOutput(
+      objectName = "mySpuDmids", objectClass = "data.frame",
+      desc = "the table containing one line per pixel"),
+    createsOutput(
+      objectName = "historicDMtype", objectClass = "numeric",
+      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
+    createsOutput(
+      objectName = "lastPassDMtype", objectClass = "numeric",
+      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
+
+
+    createsOutput(
+      objectName = "ages", objectClass = "numeric",
+      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"), #TODO: object does not exist in module
+    createsOutput(
+      objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
+    createsOutput(
+      objectName = "nStands", objectClass = "numeric",
+      desc = "not really the number of stands, but the number of pixel groups"), #TODO: object does not exist in module
+    createsOutput(
+      objectName = "minRotations", objectClass = "numeric",
+      desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."), #TODO: object does not exist in module
+    createsOutput(
+      objectName = "maxRotations", objectClass = "numeric",
+      desc = "Vector, one for each stand, indicating maximum number of rotations. Only Spinup."), #TODO: object does not exist in module
+    createsOutput(
+      objectName = "returnIntervals", objectClass = "numeric",
+      desc = "Vector, one for each stand, indicating the fixed fire return interval. Only Spinup."), #TODO: object does not exist in module
   )
 ))
 
