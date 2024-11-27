@@ -109,14 +109,14 @@ defineModule(sim, list(
     expectsInput(
       objectName = "spuRaster", objectClass = "raster",
       desc = "Raster has spatial units for each pixel"
-      sourceURL = ""),
+      sourceURL = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed"),
     expectsInput(
       objectName = "spuRasterURL", objectClass = "character",
       desc = "URL for spuRaster"),
     expectsInput(
       objectName = "ecoRaster", objectClass = "raster",
       desc = "Raster has ecozones for each pixel"
-      sourceURL = ""),
+      sourceURL = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"),
     expectsInput(
       objectName = "ecoRasterURL", objectClass = "character",
       desc = "URL for ecoRaster"),
@@ -642,6 +642,9 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
   # if(!suppliedElsewhere(sim$spatialUnits)){
   if (!suppliedElsewhere(sim$spuRaster)) {
+    if (!suppliedElsewhere(sim$spuRasterURL)) {
+      sim$spuRasterURL <- extractURL("spuRaster")
+    }
     ##TODO Need to check that there SPU match what the CAT is using.
     # The current PSPU data for the CAT is here:
     #\\vic-fas2\cat\NFCMARS_admin\Data\SpatialFramework\PSPUS.zip
@@ -650,7 +653,7 @@ Init <- function(sim) {
     # - we need to compare those two files.
     canadaSpu <- prepInputs(
       targetFile = "spUnit_Locator.shp",
-      url = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed",
+      url = sim$spuRasterURL,
       destinationPath = inputPath(sim),
       alsoExtract = "similar")|> Cache()
 
@@ -673,8 +676,11 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
   # if(!suppliedElsewhere(sim$ecozones)){
   if (!suppliedElsewhere(sim$ecoRaster)) {
+    if (!suppliedElsewhere(sim$ecoRasterURL)) {
+      sim$ecoRasterURL <- extractURL("ecoRaster")
+    }
     ecozones <- Cache(prepInputs,
-                      url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                      url = sim$ecoRasterURL,
                       alsoExtract = "similar",
                       destinationPath = inputPath(sim),
                       filename1 = "ecozone_shp.zip",
