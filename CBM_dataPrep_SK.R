@@ -48,11 +48,11 @@ defineModule(sim, list(
 
   inputObjects = bindrows(
     expectsInput(objectName = "dbPath", objectClass = "character", desc = NA,
-                 sourceURL = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db"), # FROM DEFAULTS
+                 sourceURL = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "spinupSQL", objectClass = "dataset", desc = NA), # FROM DEFAULTS
+      objectName = "spinupSQL", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
-      objectName = "species_tr", objectClass = "dataset", desc = NA), # FROM DEFAULTS
+      objectName = "species_tr", objectClass = "dataset", desc = NA, sourceURL = NA), # FROM DEFAULTS
     expectsInput(
       objectName = "gcMeta", objectClass = "data.frame",
       desc = paste("Provides equivalent between provincial boundaries",
