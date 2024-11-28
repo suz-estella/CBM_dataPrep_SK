@@ -125,9 +125,11 @@ defineModule(sim, list(
       objectName = "allPixDT", objectClass = "data.table",
       desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
                    "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)")),
+    expectsInput(
     objectName = "disturbanceRasters", objectClass = "character",
     desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
     sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
+  )
   ),
 
   outputObjects = bindrows(
