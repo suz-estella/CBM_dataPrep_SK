@@ -14,6 +14,36 @@ editor_options:
 ---
 # CBM_dataPrep_SK
 
+
+## Overview
+
+## List of input objects
+
+| Name            | Class           | Description           | Source          |
+|-----------------|-----------------|-----------------------|-----------------|
+
+
+
+
+## List of output objects
+
+| Name             | Class            | Description                         |
+|------------------|------------------|-------------------------------------|
+
+
+## Module flow (rename this section later)
+
+1.  
+
+2.  
+
+3.  
+
+4.  
+
+
+#OLD VERSION
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, results = "hold")
 ```
