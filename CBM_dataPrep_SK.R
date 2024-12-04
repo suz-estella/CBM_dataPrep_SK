@@ -698,6 +698,10 @@ Init <- function(sim) {
     ## recognize some of the french characters.
     # ecozones <- terra::vect(ecozones)
 
+    ## DEC 4 2024: this prepInputs call current doesn't work. It is an issue with one of the packages in prepInputs and as of right now only affects this file.
+    ## either there will be a prepInputs fix for this or Camille will find an alternative url to download, whichever comes first.
+    ## For now, download the shapefile here: http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip and save to spadesCBM/inputs.
+
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
   }
   # }
