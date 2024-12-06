@@ -19,15 +19,6 @@ defineModule(sim, list(
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
-    # defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
-    defineParameter(
-      ".plotInitialTime", "numeric", NA, NA, NA,
-      "This describes the simulation time at which the first plot event should occur"
-    ),
-    defineParameter(
-      ".plotInterval", "numeric", NA, NA, NA,
-      "This describes the simulation time interval between plot events"
-    ),
     defineParameter(
       ".useCache", "logical", TRUE, NA, NA,
       paste(
