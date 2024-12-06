@@ -13,7 +13,8 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
-    "data.table", "terra","fasterize", "magrittr", "raster", "RSQLite", "sf", "reproducible (>= 2.1.1.9007)" ,
+    "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
+    "reproducible (>= 2.1.1.9007)" ,
     "PredictiveEcology/CBMutils@development",
     "PredictiveEcology/LandR@development"
   ),
@@ -670,7 +671,7 @@ Init <- function(sim) {
 
     sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
                                       terra::rast(sim$masterRaster),
-                                      field = "spu_id") |> raster::raster()
+                                      field = "spu_id")
   }
   # }
 
@@ -710,11 +711,13 @@ Init <- function(sim) {
     stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
   }
 
-  dtRasters <- as.data.table(cbind(ages = sim$ageRaster[][,1],
-                                   spatial_unit_id = sim$spuRaster[],
-                                   gcids = sim$gcIndexRaster[][,1],
-                                   ecozones = sim$ecoRaster[][,1]
-  ))
+  # Summarize raster values into table
+  dtRasters <- data.table(
+    ages            = terra::values(sim$ageRaster)[,1],
+    spatial_unit_id = terra::values(sim$spuRaster)[,1],
+    gcids           = terra::values(sim$gcIndexRaster)[,1],
+    ecozones        = terra::values(sim$ecoRaster)[,1]
+  )
 
   # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
   if (isTRUE(P(sim)$doAssertions)) {
