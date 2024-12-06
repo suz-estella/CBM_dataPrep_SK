@@ -8,7 +8,6 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(SpaDES.core = "1.0.2", CBM_dataPrep_SK = "0.0.1"),
-  spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
