@@ -575,8 +575,6 @@ Init <- function(sim) {
   ## parameters to the right location (example: decomposition rates).
   ##
 
-  ## Jan 2023 addition from Eliot from Zulip R-help
-  options("reproducible.useTerra" = TRUE)
   # 1. Raster to match (masterRaster). This is the study area.
   ##TODO remove this note when we are done making everything work for the small
   ##study area in SK.
