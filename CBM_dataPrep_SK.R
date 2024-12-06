@@ -19,14 +19,8 @@ defineModule(sim, list(
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
-    defineParameter(
-      ".useCache", "logical", TRUE, NA, NA,
-      paste(
-        "Should this entire module be run with caching activated?",
-        "This is generally intended for data-type modules,",
-        "where stochasticity and time are not relevant"
-      )
-    )
+    defineParameter(".useCache", "logical", TRUE, NA, NA,
+                    "Should caching of events or module be used?")
   ),
 
   inputObjects = bindrows(
