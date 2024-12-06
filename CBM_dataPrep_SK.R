@@ -185,10 +185,7 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       sim <- Init(sim)
 
     },
-    warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
-      "' in module '", current(sim)[1, "moduleName", with = FALSE], "'",
-      sep = ""
-    ))
+    warning(noEventWarning(sim))
   )
   return(invisible(sim))
 }
