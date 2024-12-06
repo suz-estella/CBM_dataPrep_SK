@@ -8,13 +8,13 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(SpaDES.core = "1.0.2", CBM_dataPrep_SK = "0.0.1"),
-  spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("CBM_dataPrep_SK.Rmd"),
   reqdPkgs = list(
-    "data.table", "terra","fasterize", "magrittr", "raster", "RSQLite", "sf", "reproducible (>= 2.1.1.9007)" ,
+    "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
+    "reproducible (>= 2.1.1.9007)" ,
     "PredictiveEcology/CBMutils@development",
     "PredictiveEcology/LandR@development"
   ),
@@ -576,8 +576,6 @@ Init <- function(sim) {
   ## parameters to the right location (example: decomposition rates).
   ##
 
-  ## Jan 2023 addition from Eliot from Zulip R-help
-  options("reproducible.useTerra" = TRUE)
   # 1. Raster to match (masterRaster). This is the study area.
   ##TODO remove this note when we are done making everything work for the small
   ##study area in SK.
@@ -673,7 +671,7 @@ Init <- function(sim) {
 
     sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
                                       terra::rast(sim$masterRaster),
-                                      field = "spu_id") |> raster::raster()
+                                      field = "spu_id")
   }
   # }
 
@@ -713,11 +711,13 @@ Init <- function(sim) {
     stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
   }
 
-  dtRasters <- as.data.table(cbind(ages = sim$ageRaster[][,1],
-                                   spatial_unit_id = sim$spuRaster[],
-                                   gcids = sim$gcIndexRaster[][,1],
-                                   ecozones = sim$ecoRaster[][,1]
-  ))
+  # Summarize raster values into table
+  dtRasters <- data.table(
+    ages            = terra::values(sim$ageRaster)[,1],
+    spatial_unit_id = terra::values(sim$spuRaster)[,1],
+    gcids           = terra::values(sim$gcIndexRaster)[,1],
+    ecozones        = terra::values(sim$ecoRaster)[,1]
+  )
 
   # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
   if (isTRUE(P(sim)$doAssertions)) {
