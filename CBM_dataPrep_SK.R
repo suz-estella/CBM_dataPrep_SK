@@ -29,14 +29,6 @@ defineModule(sim, list(
       "This describes the simulation time interval between plot events"
     ),
     defineParameter(
-      ".saveInitialTime", "numeric", NA, NA, NA,
-      "This describes the simulation time at which the first save event should occur"
-    ),
-    defineParameter(
-      ".saveInterval", "numeric", NA, NA, NA,
-      "This describes the simulation time interval between save events"
-    ),
-    defineParameter(
       ".useCache", "logical", TRUE, NA, NA,
       paste(
         "Should this entire module be run with caching activated?",
@@ -197,14 +189,10 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
-      ### check for more detailed object dependencies:
-      ### (use `checkObject` or similar)
 
-      # do stuff for this event
+      # Initialize module
       sim <- Init(sim)
 
-      # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_SK", "save")
     },
     warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
       "' in module '", current(sim)[1, "moduleName", with = FALSE], "'",
