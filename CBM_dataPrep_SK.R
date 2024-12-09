@@ -409,7 +409,6 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
 
-  cacheTags <- c(currentModule(sim), "function:.inputObjects")
   ##TODO recheck that this is correct
   # there seems to be something confusing here. dataPath(sim) gives me
   # "C:/Celine/github/spadesCBM/modules/CBM_dataPrep_SK/data", but the next line
