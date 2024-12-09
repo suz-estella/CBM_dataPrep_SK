@@ -196,26 +196,6 @@ Init <- function(sim) {
   ## parameters to the right location (example: decomposition rates).
   ##
 
-  io <- inputObjects(sim, currentModule(sim))
-  objectNamesExpected <- io$objectName
-  available <- objectNamesExpected %in% ls(sim)
-
-  ## TODO: these aren't required
-  omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3URL"))
-  available <- available[-omit]
-  objectNamesExpected <- objectNamesExpected[-omit]
-
-  # if (any(!available)) {
-  #   stop(
-  #     "The inputObjects for CBM_core are not all available:",
-  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
-  #     ". \n\nHave you run ",
-  #     paste0("CBM_", c("defaults"), collapse = ", "),
-  #     "?"
-  #   )
-  # }
-
-
   spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(gcids),]
 
 
@@ -417,27 +397,6 @@ Init <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  ##TODO we need either use something that checks if the user has run
-  ##CBM_defaults.R or require the user to provide the information that would
-  ##come from CBM_defaults, in another way.
-  #This (below and commented) would be a way to check is all objects are
-  #there...but we can't run it until this module is cleaned up and the expected
-  #and created objects are correct.
-  # io <- inputObjects(sim, currentModule(sim))
-  # objectNamesExpected <- io$objectName
-  # available <- objectNamesExpected %in% ls(sim)
-  # if (any(!available)) {
-  #   stop(
-  #     "The inputObjects for CBM_dataPrep_XX are not all available:",
-  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
-  #     ". \n\nHave you run the ",
-  #     paste0("CBM", c("_defaults"), collapse = ", "),
-  #     "module?"
-  #   )
-  # }
-  #
-
-  ##TODO figure out a way to run this module (CBM_dataPrep_XX) if user doesn't run CBM_defaults.
   ##OLD - delete once everything works for the SK managed forests.
   # # if we chose to not use the RSQLite library in this module, and extract
   # # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
