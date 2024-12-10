@@ -617,7 +617,7 @@ Init <- function(sim) {
                       destinationPath = inputPath(sim),
                       filename1 = "ecozone_shp.zip",
                       # overwrite = TRUE, ## not needed if filename1 specified
-                      fun = "sf::st_read", #"terra::vect",
+                      fun = sf::st_read(targetFile, quiet = TRUE), #"terra::vect",
                       rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
     ## TODO: terra::vect fails on some windows machines. Windows does not
