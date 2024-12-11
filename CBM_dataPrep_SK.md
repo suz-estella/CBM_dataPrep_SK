@@ -11,6 +11,15 @@ editor_options:
   chunk_output_type: console
 ---
 
+# Diagram
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
 
 
 # Overview
