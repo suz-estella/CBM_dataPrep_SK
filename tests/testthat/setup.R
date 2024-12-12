@@ -35,9 +35,6 @@
   # Set reproducible to be quiet
   withr::local_options(list("reproducible.verbose" = -1), .local_envir = teardownEnv)
 
-  # Open test data directory
-  if (!testthat::is_testing()) shell.exec(normalizePath(testDirs$tempRoot))
-
 
 ## SET UNIVERSAL INPUTS ----
 
