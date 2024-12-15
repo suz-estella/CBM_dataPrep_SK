@@ -2,10 +2,11 @@
 ## SET UP ----
 
   # Install required packages
-  ## Required because module is not a package
-  install.packages("testthat")
-  install.packages("googledrive")
-  install.packages("SpaDES.core", repos = unique(c("predictiveecology.r-universe.dev", getOption("repos"))))
+  ## Required because module is not an R package
+  install.packages(
+    c("testthat", "SpaDES.core", "reproducible", "googledrive"),
+    type = "binary",
+    repos = unique(c("predictiveecology.r-universe.dev", getOption("repos"))))
 
   # Cache Google Drive authorization
   ## Set authorization email and cache location
