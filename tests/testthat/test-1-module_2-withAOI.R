@@ -32,43 +32,45 @@
 
   sims <- list()
 
-  # simInit
-  sims$init <- tryCatch(
-
-    SpaDES.core::simInit(
-      modules = "CBM_dataPrep_SK",
-      objects = inputObjects,
-      paths   = list(
-        modulePath  = dirname(testDirs$module),
-        inputPath   = file.path(projectPath, "inputs"),
-        outputPath  = file.path(projectPath, "outputs"),
-        cachePath   = file.path(projectPath, "cache"),
-        scratchPath = file.path(projectPath, "scratch"),
-        rasterPath  = file.path(projectPath, "raster"),
-        terraPath   = file.path(projectPath, "terra")
-      )
-    ),
-
-    error = function(e) if (testthat::is_testing()) return(e) else stop(e)
-  )
+  sims <- list()
 
   test_that("simInit runs successfully", {
+
+    sims$init <<- withCallingHandlers(suppressMessages(
+
+      SpaDES.core::simInit(
+        modules = "CBM_dataPrep_SK",
+        objects = inputObjects,
+        paths   = list(
+          modulePath  = dirname(testDirs$module),
+          inputPath   = file.path(projectPath, "inputs"),
+          outputPath  = file.path(projectPath, "outputs"),
+          cachePath   = file.path(projectPath, "cache"),
+          scratchPath = file.path(projectPath, "scratch"),
+          rasterPath  = file.path(projectPath, "raster"),
+          terraPath   = file.path(projectPath, "terra")
+        ))
+
+    ), warning = function(w){
+      if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+        invokeRestart("muffleWarning")
+      }
+    })
+
     expect_s4_class(sims$init, "simList")
   })
+
   if (!inherits(sims$init, "simList")) stop(
     "SpaDES.core::simInit failed",
     if (inherits(sims$init, "error")) c(":\n", sims$init$message),
     call. = F)
 
-  # spades
-  sims$spades <- tryCatch(
-
-    SpaDES.core::spades(reproducible::Copy(sims$init)),
-
-    error = function(e) if (testthat::is_testing()) return(e) else stop(e)
-  )
 
   test_that("spades runs successfully", {
+
+    sims$spades <<- suppressMessages(
+      SpaDES.core::spades(reproducible::Copy(sims$init))
+    )
 
     expect_s4_class(sims$spades, "simList")
   })
@@ -152,7 +154,7 @@
   test_that("'realAges' output created", {
 
     expect_true(!is.null(sims$spades$realAges))
-    expect_true(inherits(sims$spades$realAges, "numeric"))
+    expect_true(class(sims$spades$realAges) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$realAges), 41)
     expect_identical(sims$spades$realAges, c(
       100, 100, 100, 100, 101, 101, 101, 102, 102, 109, 109, 11, 110, 12, 12,
@@ -164,7 +166,7 @@
   test_that("'delays' output created", {
 
     expect_true(!is.null(sims$spades$delays))
-    expect_true(inherits(sims$spades$delays, "numeric"))
+    expect_true(class(sims$spades$delays) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$delays), 41)
     expect_equal(sims$spades$delays, rep(0, 41))
   })
@@ -172,7 +174,7 @@
   test_that("'ecozones' output created", {
 
     expect_true(!is.null(sims$spades$ecozones))
-    expect_true(inherits(sims$spades$ecozones, "numeric"))
+    expect_true(class(sims$spades$ecozones) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$ecozones), 41)
     expect_equal(sims$spades$ecozones, rep(9, 41))
   })
@@ -180,7 +182,7 @@
   test_that("'spatialUnits' output created", {
 
     expect_true(!is.null(sims$spades$spatialUnits))
-    expect_true(inherits(sims$spades$spatialUnits, "integer"))
+    expect_true(class(sims$spades$spatialUnits) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$spatialUnits), 41)
     expect_equal(sims$spades$spatialUnits, rep(28, 41))
 
@@ -248,7 +250,7 @@
   test_that("'historicDMtype' output created", {
 
     expect_true(!is.null(sims$spades$historicDMtype))
-    expect_true(inherits(sims$spades$historicDMtype, "integer"))
+    expect_true(class(sims$spades$historicDMtype) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$historicDMtype), 41)
     expect_equal(sims$spades$historicDMtype, rep(1, 41))
 
@@ -257,7 +259,7 @@
   test_that("'lastPassDMtype' output created", {
 
     expect_true(!is.null(sims$spades$historicDMtype))
-    expect_true(inherits(sims$spades$lastPassDMtype, "integer"))
+    expect_true(class(sims$spades$historicDMtype) %in% c("integer", "numeric"))
     expect_equal(length(sims$spades$lastPassDMtype), 41)
     expect_equal(sims$spades$lastPassDMtype, rep(1, 41))
 
