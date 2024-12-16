@@ -9,18 +9,6 @@
     module = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
   )
 
-  # Source module code
-  suppressPackageStartupMessages(library(SpaDES.core))
-
-  sim <- suppressMessages(SpaDES.core::simInit())
-  source(file.path(testDirs$module, paste0(basename(testDirs$module), ".R")), local = TRUE)
-  if (file.exists(file.path(testDirs$module, "R"))){
-    for (f in list.files(file.path(testDirs$module, "R"), full = TRUE)){
-      source(f, local = TRUE)
-    }
-  }
-  rm(sim)
-
   # Set input data path
   testDirs$testdata <- file.path(testthat::test_path(), "testdata")
 
@@ -32,20 +20,14 @@
 
   # Create temporary testing directories
   dir.create(testDirs$tempRoot)
+  withr::defer(unlink(testDirs$tempRoot, recursive = TRUE), envir = teardownEnv)
+
   dir.create(testDirs$inputs)
   dir.create(testDirs$outputs)
   dir.create(testDirs$libPath)
 
-  # Remove temporary testing directory on teardown
-  if (testthat::is_testing()){
-    withr::defer(unlink(testDirs$tempRoot, recursive = TRUE), envir = teardownEnv)
-  }
-
   # Prefix library paths with temporary directory path
   withr::local_libpaths(c(testDirs$libPath, .libPaths()), .local_envir = teardownEnv)
-
-  # Set reproducible to be quiet
-  withr::local_options(list("reproducible.verbose" = -1), .local_envir = teardownEnv)
 
   # Authorize Google Drive
   googledrive::drive_auth()
@@ -62,7 +44,8 @@
     url = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
     targetFile = "cbm_defaults_v1.2.8340.362.db",
     destinationPath = testDirs$inputs,
-    alsoExtract = NA, fun = NA)
+    alsoExtract = NA, fun = NA,
+    verbose = -1)
 
   ## RDS data provided because creation of these outputs is more complex than simple downloads
   moduleInputs$spinupSQL  <- readRDS(file.path(testDirs$testdata, "spinupSQL.rds"))
@@ -74,6 +57,6 @@
     targetFile = "gcMetaEg.csv",
     destinationPath = testDirs$inputs,
     fun = fread,
-    purge = 7
-  )
+    purge = 7,
+    verbose = -1)
 
