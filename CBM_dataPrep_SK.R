@@ -19,31 +19,8 @@ defineModule(sim, list(
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
-    # defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
-    defineParameter(
-      ".plotInitialTime", "numeric", NA, NA, NA,
-      "This describes the simulation time at which the first plot event should occur"
-    ),
-    defineParameter(
-      ".plotInterval", "numeric", NA, NA, NA,
-      "This describes the simulation time interval between plot events"
-    ),
-    defineParameter(
-      ".saveInitialTime", "numeric", NA, NA, NA,
-      "This describes the simulation time at which the first save event should occur"
-    ),
-    defineParameter(
-      ".saveInterval", "numeric", NA, NA, NA,
-      "This describes the simulation time interval between save events"
-    ),
-    defineParameter(
-      ".useCache", "logical", TRUE, NA, NA,
-      paste(
-        "Should this entire module be run with caching activated?",
-        "This is generally intended for data-type modules,",
-        "where stochasticity and time are not relevant"
-      )
-    )
+    defineParameter(".useCache", "logical", TRUE, NA, NA,
+                    "Should caching of events or module be used?")
   ),
 
   inputObjects = bindrows(
@@ -197,19 +174,12 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
-      ### check for more detailed object dependencies:
-      ### (use `checkObject` or similar)
 
-      # do stuff for this event
+      # Initialize module
       sim <- Init(sim)
 
-      # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_SK", "save")
     },
-    warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
-      "' in module '", current(sim)[1, "moduleName", with = FALSE], "'",
-      sep = ""
-    ))
+    warning(noEventWarning(sim))
   )
   return(invisible(sim))
 }
@@ -225,26 +195,6 @@ Init <- function(sim) {
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
   ##
-
-  io <- inputObjects(sim, currentModule(sim))
-  objectNamesExpected <- io$objectName
-  available <- objectNamesExpected %in% ls(sim)
-
-  ## TODO: these aren't required
-  omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3URL"))
-  available <- available[-omit]
-  objectNamesExpected <- objectNamesExpected[-omit]
-
-  # if (any(!available)) {
-  #   stop(
-  #     "The inputObjects for CBM_core are not all available:",
-  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
-  #     ". \n\nHave you run ",
-  #     paste0("CBM_", c("defaults"), collapse = ", "),
-  #     "?"
-  #   )
-  # }
-
 
   spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(gcids),]
 
@@ -439,7 +389,6 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
 
-  cacheTags <- c(currentModule(sim), "function:.inputObjects")
   ##TODO recheck that this is correct
   # there seems to be something confusing here. dataPath(sim) gives me
   # "C:/Celine/github/spadesCBM/modules/CBM_dataPrep_SK/data", but the next line
@@ -448,27 +397,6 @@ Init <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  ##TODO we need either use something that checks if the user has run
-  ##CBM_defaults.R or require the user to provide the information that would
-  ##come from CBM_defaults, in another way.
-  #This (below and commented) would be a way to check is all objects are
-  #there...but we can't run it until this module is cleaned up and the expected
-  #and created objects are correct.
-  # io <- inputObjects(sim, currentModule(sim))
-  # objectNamesExpected <- io$objectName
-  # available <- objectNamesExpected %in% ls(sim)
-  # if (any(!available)) {
-  #   stop(
-  #     "The inputObjects for CBM_dataPrep_XX are not all available:",
-  #     "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
-  #     ". \n\nHave you run the ",
-  #     paste0("CBM", c("_defaults"), collapse = ", "),
-  #     "module?"
-  #   )
-  # }
-  #
-
-  ##TODO figure out a way to run this module (CBM_dataPrep_XX) if user doesn't run CBM_defaults.
   ##OLD - delete once everything works for the SK managed forests.
   # # if we chose to not use the RSQLite library in this module, and extract
   # # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
@@ -689,7 +617,7 @@ Init <- function(sim) {
                       destinationPath = inputPath(sim),
                       filename1 = "ecozone_shp.zip",
                       # overwrite = TRUE, ## not needed if filename1 specified
-                      fun = "sf::st_read", #"terra::vect",
+                      fun = sf::st_read(targetFile, quiet = TRUE), #"terra::vect",
                       rasterToMatch = sim$masterRaster
     ) ## ecozones is a SpatVect class object
     ## TODO: terra::vect fails on some windows machines. Windows does not
