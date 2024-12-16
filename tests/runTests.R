@@ -28,6 +28,10 @@
   # Run all tests without warnings
   withr::with_options(c(warn = -1), testthat::test_dir("tests/testthat"))
 
+  # Run all tests with different reporters
+  testthat::test_dir("tests/testthat", reporter = testthat::LocationReporter)
+  testthat::test_dir("tests/testthat", reporter = testthat::SummaryReporter)
+
 
 ## RUN INDIVIDUAL TESTS ----
 
