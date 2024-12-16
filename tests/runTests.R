@@ -25,6 +25,9 @@
   # Run all tests
   testthat::test_dir("tests/testthat")
 
+  # Run all tests without warnings
+  withr::with_options(c(warn = -1), testthat::test_dir("tests/testthat"))
+
 
 ## RUN INDIVIDUAL TESTS ----
 
