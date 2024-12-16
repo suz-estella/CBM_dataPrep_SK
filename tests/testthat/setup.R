@@ -4,23 +4,35 @@
   # Set teardown environment
   teardownEnv <- if (testthat::is_testing()) testthat::teardown_env() else .GlobalEnv
 
-  # Authorize Google Drive
-  googledrive::drive_auth()
-  withr::defer(googledrive::drive_deauth(), envir = teardownEnv)
-
-  # Set directory paths
+  # Set module path
   testDirs <- list(
-    module   = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd()),
-    testdata = file.path(testthat::test_path(), "testdata"),
-    tempRoot = file.path(tempdir(), "CBM_defaults_SK_tests")
+    module = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
   )
 
-  testDirs$inputs  <- file.path(testDirs$tempRoot, "inputs")
-  testDirs$outputs <- file.path(testDirs$tempRoot, "outputs")
-  testDirs$libPath <- file.path(testDirs$tempRoot, "library")
+  # Source module code
+  suppressPackageStartupMessages(library(SpaDES.core))
+
+  sim <- suppressMessages(SpaDES.core::simInit())
+  source(file.path(testDirs$module, paste0(basename(testDirs$module), ".R")), local = TRUE)
+  if (file.exists(file.path(testDirs$module, "R"))){
+    for (f in list.files(file.path(testDirs$module, "R"), full = TRUE)){
+      source(f, local = TRUE)
+    }
+  }
+  rm(sim)
+
+  # Set input data path
+  testDirs$testdata <- file.path(testthat::test_path(), "testdata")
+
+  # Set temporary directory paths
+  testDirs$tempRoot <- file.path(tempdir(), paste0(basename(testDirs$module), "_tests"))
+  testDirs$inputs   <- file.path(testDirs$tempRoot, "inputs")
+  testDirs$outputs  <- file.path(testDirs$tempRoot, "outputs")
+  testDirs$libPath  <- file.path(testDirs$tempRoot, "library")
 
   # Create temporary testing directories
   dir.create(testDirs$tempRoot)
+  dir.create(testDirs$inputs)
   dir.create(testDirs$outputs)
   dir.create(testDirs$libPath)
 
@@ -34,6 +46,10 @@
 
   # Set reproducible to be quiet
   withr::local_options(list("reproducible.verbose" = -1), .local_envir = teardownEnv)
+
+  # Authorize Google Drive
+  googledrive::drive_auth()
+  withr::defer(googledrive::drive_deauth(), envir = teardownEnv)
 
 
 ## SET UNIVERSAL INPUTS ----
@@ -60,8 +76,4 @@
     fun = fread,
     purge = 7
   )
-
-
-
-
 
