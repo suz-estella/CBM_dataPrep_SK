@@ -13,7 +13,7 @@
   testDirs$testdata <- file.path(testthat::test_path(), "testdata")
 
   # Set temporary directory paths
-  testDirs$tempRoot <- file.path(tempdir(), paste0(basename(testDirs$module), "_tests"))
+  testDirs$tempRoot <- file.path(tempdir(), paste0("testthat-", basename(testDirs$module)))
   testDirs$inputs   <- file.path(testDirs$tempRoot, "inputs")
   testDirs$outputs  <- file.path(testDirs$tempRoot, "outputs")
   testDirs$libPath  <- file.path(testDirs$tempRoot, "library")
