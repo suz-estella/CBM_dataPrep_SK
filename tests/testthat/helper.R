@@ -1,8 +1,9 @@
 
 # Get a list of test directory paths
+## These will need to be updated if a DESCRIPTION file is added.
 .test_directories <- function(tempDir = tempdir()){
 
-  # Set module path (update this when DESCRIPTION file is incorporated)
+  # Set module path
   testDirs <- list(
     module = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
   )
