@@ -1,65 +1,64 @@
 
-if (!testthat::is_testing()){
-  library(testthat)
-  source(file.path(testthat::test_path(), "setup.R"))
-}
+if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("module runs with study AOI", {
+test_that("Module runs with study AOI", {
 
   ## Run simInit and spades ----
 
-  # Set project path
-  projectPath <- file.path(testDirs$outputs, "1-module_2-withAOI")
-  dir.create(projectPath)
-
-  # Set inputs
-  inputObjects <- moduleInputs
-
-  ## Set study area
-  inputObjects$masterRaster <- {
-    extent = terra::ext(c(xmin = -687696, xmax = -681036, ymin = 711955, ymax = 716183))
-    masterRaster <- terra::rast(extent, res = 30)
-    terra::crs(masterRaster) <- "PROJCRS[\"Lambert_Conformal_Conic_2SP\",\n    BASEGEOGCRS[\"GCS_GRS_1980_IUGG_1980\",\n        DATUM[\"D_unknown\",\n            ELLIPSOID[\"GRS80\",6378137,298.257222101,\n                LENGTHUNIT[\"metre\",1,\n                    ID[\"EPSG\",9001]]]],\n        PRIMEM[\"Greenwich\",0,\n            ANGLEUNIT[\"degree\",0.0174532925199433,\n                ID[\"EPSG\",9122]]]],\n    CONVERSION[\"Lambert Conic Conformal (2SP)\",\n        METHOD[\"Lambert Conic Conformal (2SP)\",\n            ID[\"EPSG\",9802]],\n        PARAMETER[\"Latitude of false origin\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8821]],\n        PARAMETER[\"Longitude of false origin\",-95,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8822]],\n        PARAMETER[\"Latitude of 1st standard parallel\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8823]],\n        PARAMETER[\"Latitude of 2nd standard parallel\",77,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8824]],\n        PARAMETER[\"Easting at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8826]],\n        PARAMETER[\"Northing at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8827]]],\n    CS[Cartesian,2],\n        AXIS[\"easting\",east,\n            ORDER[1],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]],\n        AXIS[\"northing\",north,\n            ORDER[2],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]]]"
-    masterRaster[] <- rep(1, terra::ncell(masterRaster))
-    mr <- reproducible::prepInputs(url = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW/view?usp=drive_link",
-                                   destinationPath = testDirs$inputs,
-                                   to = masterRaster,
-                                   method = "near")
-    mr[mr[] == 0] <- NA
-    mr
-  }
-
-  # Run simInit and spades
-  simTestInit <- withCallingHandlers(suppressMessages(
-
-    SpaDES.core::simInit(
-      modules = "CBM_dataPrep_SK",
-      objects = inputObjects,
-      paths   = list(
-        modulePath  = dirname(testDirs$module),
-        inputPath   = file.path(projectPath, "inputs"),
-        outputPath  = file.path(projectPath, "outputs"),
-        cachePath   = file.path(projectPath, "cache"),
-        scratchPath = file.path(projectPath, "scratch"),
-        rasterPath  = file.path(projectPath, "raster"),
-        terraPath   = file.path(projectPath, "terra")
-      ))
-
-  ), warning = function(w){
-    if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
-      invokeRestart("muffleWarning")
-    }
+  # Restore paths on teardown
+  pathsOriginal <- list(wd = getwd(), libs = .libPaths())
+  withr::defer({
+    setwd(pathsOriginal$wd)
+    #.libPaths(pathsOriginal$libs)
   })
 
-  expect_s4_class(simTestInit, "simList")
-  if (!inherits(simTestInit, "simList")) stop("simInit failed", call. = FALSE)
+  # Set up project
+  simInitInput <- .SpaDESwithCallingHandlers(
 
-  simTest <- suppressMessages(
+    SpaDES.project::setupProject(
+
+      modules = "CBM_dataPrep_SK",
+      paths   = list(
+        projectPath = file.path(testDirs$temp$projects, "2-withAOI"),
+        modulePath  = dirname(testDirs$module)#,
+        #packagePath = testDirs$temp$libPath
+      ),
+      require = "testthat",
+
+      dbPath     = .test_defaultInputs("dbPath"),
+      spinupSQL  = .test_defaultInputs("spinupSQL"),
+      species_tr = .test_defaultInputs("species_tr"),
+      gcMeta     = .test_defaultInputs("gcMeta"),
+
+
+      masterRaster = {
+        extent = terra::ext(c(xmin = -687696, xmax = -681036, ymin = 711955, ymax = 716183))
+        masterRaster <- terra::rast(extent, res = 30)
+        terra::crs(masterRaster) <- "PROJCRS[\"Lambert_Conformal_Conic_2SP\",\n    BASEGEOGCRS[\"GCS_GRS_1980_IUGG_1980\",\n        DATUM[\"D_unknown\",\n            ELLIPSOID[\"GRS80\",6378137,298.257222101,\n                LENGTHUNIT[\"metre\",1,\n                    ID[\"EPSG\",9001]]]],\n        PRIMEM[\"Greenwich\",0,\n            ANGLEUNIT[\"degree\",0.0174532925199433,\n                ID[\"EPSG\",9122]]]],\n    CONVERSION[\"Lambert Conic Conformal (2SP)\",\n        METHOD[\"Lambert Conic Conformal (2SP)\",\n            ID[\"EPSG\",9802]],\n        PARAMETER[\"Latitude of false origin\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8821]],\n        PARAMETER[\"Longitude of false origin\",-95,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8822]],\n        PARAMETER[\"Latitude of 1st standard parallel\",49,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8823]],\n        PARAMETER[\"Latitude of 2nd standard parallel\",77,\n            ANGLEUNIT[\"degree\",0.0174532925199433],\n            ID[\"EPSG\",8824]],\n        PARAMETER[\"Easting at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8826]],\n        PARAMETER[\"Northing at false origin\",0,\n            LENGTHUNIT[\"metre\",1],\n            ID[\"EPSG\",8827]]],\n    CS[Cartesian,2],\n        AXIS[\"easting\",east,\n            ORDER[1],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]],\n        AXIS[\"northing\",north,\n            ORDER[2],\n            LENGTHUNIT[\"metre\",1,\n                ID[\"EPSG\",9001]]]]"
+        masterRaster[] <- rep(1, terra::ncell(masterRaster))
+        mr <- reproducible::prepInputs(url = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW/view?usp=drive_link",
+                                       destinationPath = testDirs$inputs,
+                                       to = masterRaster,
+                                       method = "near")
+        mr[mr[] == 0] <- NA
+        mr
+      }
+    )
+  )
+
+  # Run simInit
+  simTestInit <- .SpaDESwithCallingHandlers(
+    SpaDES.core::simInit2(simInitInput)
+  )
+
+  expect_s4_class(simTestInit, "simList")
+
+  # Run spades
+  simTest <- .SpaDESwithCallingHandlers(
     SpaDES.core::spades(simTestInit)
   )
 
   expect_s4_class(simTest, "simList")
-  if (!inherits(simTest, "simList")) stop("spades failed", call. = FALSE)
 
 
   ## Check output 'spatialDT' ----

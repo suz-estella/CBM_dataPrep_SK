@@ -1,62 +1,41 @@
 
-## SET UP ----
+if (!testthat::is_testing()){
+  library(testthat)
+  testthat::source_test_helpers(env = globalenv())
+}
 
-  # Set teardown environment
-  teardownEnv <- if (testthat::is_testing()) testthat::teardown_env() else .GlobalEnv
+# Set teardown environment
+teardownEnv <- if (testthat::is_testing()) testthat::teardown_env() else parent.frame()
 
-  # Set module path
-  testDirs <- list(
-    module = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
-  )
+# List test directories
+testDirs <- .test_directories()
 
-  # Set input data path
-  testDirs$testdata <- file.path(testthat::test_path(), "testdata")
+# Create temporary directories
+for (d in testDirs$temp) dir.create(d)
+withr::defer({
+  unlink(testDirs$temp$root, recursive = TRUE)
+  if (file.exists(testDirs$temp$root)) warning(
+    "Temporary test directory could not be removed: ", testDirs$temp$root, call. = F)
+}, envir = teardownEnv, priority = "last")
 
-  # Set temporary directory paths
-  testDirs$tempRoot <- file.path(tempdir(), paste0("testthat-", basename(testDirs$module)))
-  testDirs$inputs   <- file.path(testDirs$tempRoot, "inputs")
-  testDirs$outputs  <- file.path(testDirs$tempRoot, "outputs")
-  testDirs$libPath  <- file.path(testDirs$tempRoot, "library")
+# Set reproducible options:
+# - Use a shared input data directory
+# - Silence messaging
+withr::local_options(
+  list(reproducible.inputPaths = c(testDirs$temp$inputs, getOption("reproducible.inputPaths"))),
+  .local_envir = teardownEnv)
+if (testthat::is_testing()) withr::local_options(list(reproducible.verbose = -2), .local_envir = teardownEnv)
 
-  # Create temporary testing directories
-  dir.create(testDirs$tempRoot)
-  withr::defer(unlink(testDirs$tempRoot, recursive = TRUE), envir = teardownEnv)
+# Set Require package options:
+# - Clone R packages from user library
+# - Silence messaging
+withr::local_options(list(Require.cloneFrom = Sys.getenv("R_LIBS_USER")), .local_envir = teardownEnv)
+if (testthat::is_testing()) withr::local_options(list(Require.verbose = -2), .local_envir = teardownEnv)
 
-  dir.create(testDirs$inputs)
-  dir.create(testDirs$outputs)
-  dir.create(testDirs$libPath)
+# Set SpaDES.project option to never update R profile
+withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
 
-  # Prefix library paths with temporary directory path
-  withr::local_libpaths(c(testDirs$libPath, .libPaths()), .local_envir = teardownEnv)
-
-  # Authorize Google Drive
-  googledrive::drive_auth()
-  withr::defer(googledrive::drive_deauth(), envir = teardownEnv)
-
-
-## SET UNIVERSAL INPUTS ----
-
-  ## These are standard inputs that are usually provided by CBM_defaults or CBM_vol2biomass.
-  moduleInputs <- list()
-
-  # Required input from CBM_defaults
-  moduleInputs$dbPath <- reproducible::prepInputs(
-    url = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
-    targetFile = "cbm_defaults_v1.2.8340.362.db",
-    destinationPath = testDirs$inputs,
-    alsoExtract = NA, fun = NA,
-    verbose = -1)
-
-  ## RDS data provided because creation of these outputs is more complex than simple downloads
-  moduleInputs$spinupSQL  <- readRDS(file.path(testDirs$testdata, "spinupSQL.rds"))
-  moduleInputs$species_tr <- readRDS(file.path(testDirs$testdata, "species_tr.rds"))
-
-  # Required input from CBM_vol2biomass
-  moduleInputs$gcMeta <- reproducible::prepInputs(
-    url = "https://drive.google.com/file/d/189SFlySTt0Zs6k57-PzQMuQ29LmycDmJ/view?usp=sharing",
-    targetFile = "gcMetaEg.csv",
-    destinationPath = testDirs$inputs,
-    fun = fread,
-    purge = 7,
-    verbose = -1)
+# Authorize Google Drive
+googledrive::drive_auth()
+withr::defer(googledrive::drive_deauth(), envir = teardownEnv)
 
