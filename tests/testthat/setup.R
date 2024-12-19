@@ -35,7 +35,3 @@ if (testthat::is_testing()) withr::local_options(list(Require.verbose = -2), .lo
 # Set SpaDES.project option to never update R profile
 withr::local_options(list(SpaDES.project.updateRprofile = FALSE), .local_envir = teardownEnv)
 
-# Authorize Google Drive
-googledrive::drive_auth()
-withr::defer(googledrive::drive_deauth(), envir = teardownEnv)
-
