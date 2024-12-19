@@ -1,51 +1,50 @@
 
-if (!testthat::is_testing()){
-  library(testthat)
-  source(file.path(testthat::test_path(), "setup.R"))
-}
+if (!testthat::is_testing()) source(testthat::test_path("setup.R"))
 
-test_that("module runs with defaults", {
+test_that("Module runs with defaults", {
 
   ## Run simInit and spades ----
 
-  # Set project path
-  projectPath <- file.path(testDirs$outputs, "1-module_1-defaults")
-  dir.create(projectPath)
-
-  # Set inputs
-  inputObjects <- moduleInputs
-
-  # Run simInit and spades
-  simTestInit <- withCallingHandlers(suppressMessages(
-
-    SpaDES.core::simInit(
-      modules = "CBM_dataPrep_SK",
-      objects = inputObjects,
-      paths   = list(
-        modulePath  = dirname(testDirs$module),
-        inputPath   = file.path(projectPath, "inputs"),
-        outputPath  = file.path(projectPath, "outputs"),
-        cachePath   = file.path(projectPath, "cache"),
-        scratchPath = file.path(projectPath, "scratch"),
-        rasterPath  = file.path(projectPath, "raster"),
-        terraPath   = file.path(projectPath, "terra")
-      ))
-
-  ), warning = function(w){
-    if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
-      invokeRestart("muffleWarning")
-    }
+  # Restore paths on teardown
+  pathsOriginal <- list(wd = getwd(), libs = .libPaths())
+  withr::defer({
+    setwd(pathsOriginal$wd)
+    #.libPaths(pathsOriginal$libs)
   })
 
-  expect_s4_class(simTestInit, "simList")
-  if (!inherits(simTestInit, "simList")) stop("simInit failed", call. = FALSE)
+  # Set up project
+  simInitInput <- .SpaDESwithCallingHandlers(
 
-  simTest <- suppressMessages(
+    SpaDES.project::setupProject(
+
+      modules = "CBM_dataPrep_SK",
+      paths   = list(
+        projectPath = file.path(testDirs$temp$projects, "1-defaults"),
+        modulePath  = dirname(testDirs$module)#,
+        #packagePath = testDirs$temp$libPath
+      ),
+      require = "testthat",
+
+      dbPath     = .test_defaultInputs("dbPath"),
+      spinupSQL  = .test_defaultInputs("spinupSQL"),
+      species_tr = .test_defaultInputs("species_tr"),
+      gcMeta     = .test_defaultInputs("gcMeta")
+    )
+  )
+
+  # Run simInit
+  simTestInit <- .SpaDESwithCallingHandlers(
+    SpaDES.core::simInit2(simInitInput)
+  )
+
+  expect_s4_class(simTestInit, "simList")
+
+  # Run spades
+  simTest <- .SpaDESwithCallingHandlers(
     SpaDES.core::spades(simTestInit)
   )
 
   expect_s4_class(simTest, "simList")
-  if (!inherits(simTest, "simList")) stop("spades failed", call. = FALSE)
 
 
   ## Check output 'spatialDT' ----

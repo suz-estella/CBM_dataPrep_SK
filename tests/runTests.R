@@ -4,7 +4,7 @@
   # Install required packages
   ## Required because module is not an R package
   install.packages(
-    c("testthat", "SpaDES.core", "reproducible", "googledrive"),
+    c("testthat", "SpaDES.core", "SpaDES.project", "googledrive"),
     type = "binary",
     repos = unique(c("predictiveecology.r-universe.dev", getOption("repos"))))
 
@@ -24,9 +24,6 @@
 
   # Run all tests
   testthat::test_dir("tests/testthat")
-
-  # Run all tests without warnings
-  withr::with_options(c(warn = -1), testthat::test_dir("tests/testthat"))
 
   # Run all tests with different reporters
   testthat::test_dir("tests/testthat", reporter = testthat::LocationReporter)
