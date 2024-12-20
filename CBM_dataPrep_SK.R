@@ -389,14 +389,6 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
 
-  ##TODO recheck that this is correct
-  # there seems to be something confusing here. dataPath(sim) gives me
-  # "C:/Celine/github/spadesCBM/modules/CBM_dataPrep_SK/data", but the next line
-  # gives "Sep26 15:18:01 CBM_dt:.inputObjects CBM_dataPrep_SK: using dataPath
-  # 'inputs'. Which is "C:/Celine/github/spadesCBM/inputs"
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
-  message(currentModule(sim), ": using dataPath '", dPath, "'.")
-
   ##OLD - delete once everything works for the SK managed forests.
   # # if we chose to not use the RSQLite library in this module, and extract
   # # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
@@ -673,11 +665,11 @@ Init <- function(sim) {
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
     ## download the data and identify the .grd files present
     out <- preProcess(url = extractURL("disturbanceRasters"),
-                      destinationPath = file.path(dPath),
+                      destinationPath = inputPath(sim),
                       filename1 = "disturbance_testArea.zip")
 
     sim$disturbanceRasters <- list.files(
-      file.path(dPath, "disturbance_testArea"),
+      file.path(inputPath(sim), "disturbance_testArea"),
       pattern = "[.]grd$",
       full.names = TRUE
     )
