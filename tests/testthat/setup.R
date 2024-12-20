@@ -18,6 +18,10 @@ withr::defer({
     "Temporary test directory could not be removed: ", testDirs$temp$root, call. = F)
 }, envir = teardownEnv, priority = "last")
 
+# Copy module to temporary location
+## This will hopefully be handled by testthat if a DESCRIPTION file is added.
+.test_copyModule(testDirs$Rproj, testDirs$temp$modules)
+
 # Set reproducible options:
 # - Use a shared input data directory
 # - Silence messaging

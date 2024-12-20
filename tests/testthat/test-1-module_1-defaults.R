@@ -20,8 +20,8 @@ test_that("Module runs with defaults", {
       modules = "CBM_dataPrep_SK",
       paths   = list(
         projectPath = file.path(testDirs$temp$projects, "1-defaults"),
-        modulePath  = dirname(testDirs$module)#,
-        #packagePath = testDirs$temp$libPath
+        modulePath  = testDirs$temp$modules
+        #, packagePath = testDirs$temp$libPath
       ),
       require = "testthat",
 

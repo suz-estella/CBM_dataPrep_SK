@@ -3,25 +3,44 @@
 ## These will need to be updated if a DESCRIPTION file is added.
 .test_directories <- function(tempDir = tempdir()){
 
-  # Set module path
-  testDirs <- list(
-    module = ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
-  )
+  testDirs <- list()
+
+  # Set R project location
+  testDirs$Rproj <- ifelse(testthat::is_testing(), dirname(dirname(getwd())), getwd())
 
   # Set input data path (must be absolute)
-  testDirs$testdata <- file.path(testDirs$module, "tests/testthat/testdata")
+  testDirs$testdata <- file.path(testDirs$Rproj, "tests/testthat", "testdata")
 
   # Set temporary directory paths
   testDirs$temp <- list(
-    root = file.path(tempDir, paste0("testthat-", basename(testDirs$module)))
+    root = file.path(tempDir, paste0("testthat-", basename(testDirs$Rproj)))
   )
+  testDirs$temp$modules  <- file.path(testDirs$temp$root, "modules")  # For modules
   testDirs$temp$inputs   <- file.path(testDirs$temp$root, "inputs")   # For shared inputs
   testDirs$temp$libPath  <- file.path(testDirs$temp$root, "library")  # R package library
-  testDirs$temp$outputs  <- file.path(testDirs$temp$root, "outputs")  # For unit test or misc outputs
+  testDirs$temp$outputs  <- file.path(testDirs$temp$root, "outputs")  # For unit test outputs
   testDirs$temp$projects <- file.path(testDirs$temp$root, "projects") # For project directories
 
   # Return
   testDirs
+}
+
+# Helper function: copy module
+## This will hopefully be handled by testthat if a DESCRIPTION file is added.
+.test_copyModule <- function(moduleDir, destDir, moduleName = basename(moduleDir)){
+
+  modFiles <- file.info(list.files(moduleDir, full = TRUE))
+  modFiles$name <- basename(row.names(modFiles))
+  modFiles$path <- row.names(modFiles)
+
+  modDir <- file.path(destDir, moduleName)
+  dir.create(modDir)
+
+  file.copy(modFiles$path[!modFiles$isdir],
+            file.path(modDir, modFiles$name[!modFiles$isdir]))
+  for (d in modFiles$path[modFiles$isdir & modFiles$name %in% c("R", "data")]){
+    file.copy(d, modDir, recursive = TRUE)
+  }
 }
 
 # Helper function: suppress messages; muffle common warnings
