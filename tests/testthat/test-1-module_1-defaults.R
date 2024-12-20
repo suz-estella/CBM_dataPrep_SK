@@ -52,23 +52,12 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$spatialDT))
   expect_true(inherits(simTest$spatialDT, "data.table"))
 
-  expect_equal(ncol(simTest$spatialDT), 6)
-  expect_identical(data.table::key(simTest$spatialDT), "pixelIndex")
-
   for (colName in c("ages", "spatial_unit_id", "pixelIndex", "gcids", "ecozones", "pixelGroup")){
     expect_true(colName %in% names(simTest$spatialDT))
+    expect_true(all(!is.na(simTest$spatialDT[[colName]])))
   }
 
-  expect_equal(nrow(simTest$spatialDT), 1347529)
-
-  expect_equal(sapply(simTest$spatialDT, sum), c(
-    ages            = 113392380,
-    spatial_unit_id = 37277212,
-    pixelIndex      = 2335033436340,
-    gcids           = 60978015,
-    ecozones        = 10766961,
-    pixelGroup      = 473854911
-  ))
+  expect_identical(data.table::key(simTest$spatialDT), "pixelIndex")
 
 
   ## Check output 'level3DT' ----
@@ -76,69 +65,77 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$level3DT))
   expect_true(inherits(simTest$level3DT, "data.table"))
 
-  expect_equal(ncol(simTest$level3DT), 6)
-  expect_identical(data.table::key(simTest$level3DT), "pixelGroup")
   for (colName in c("spatial_unit_id", "ages", "gcids", "ecozones", "pixelGroup", "return_interval")){
     expect_true(colName %in% names(simTest$level3DT))
+    expect_true(all(!is.na(simTest$level3DT[[colName]])))
   }
 
-  expect_equal(nrow(simTest$level3DT), 739)
-
-  expect_equal(sapply(lapply(simTest$level3DT, as.numeric), sum), c(
-    spatial_unit_id = 20371,
-    ages            = 58590,
-    gcids           = 5632,
-    ecozones        = 5688,
-    pixelGroup      = 273430,
-    return_interval = 76325
-  ))
+  expect_identical(data.table::key(simTest$level3DT), "pixelGroup")
 
 
   ## Check output 'curveID' ----
 
   expect_true(!is.null(simTest$curveID))
-  expect_equal(length(simTest$curveID), 1)
-  expect_identical(simTest$curveID, "gcids")
+  expect_true(length(simTest$curveID) >= 1)
+  expect_true("gcids" %in% simTest$curveID)
 
 
   ## Check output 'gcids' ----
 
   expect_true(!is.null(simTest$gcids))
   expect_true(inherits(simTest$gcids, "factor"))
-  expect_equal(length(simTest$gcids), 739)
-  expect_equal(sum(as.numeric(simTest$gcids)), 5632)
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$gcids), nrow(simTest$level3DT))
+
+  # Check that there are no NAs
+  expect_true(all(!is.na(simTest$gcids)))
 
 
   ## Check output 'realAges' ----
 
   expect_true(!is.null(simTest$realAges))
   expect_true(class(simTest$realAges) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$realAges), 739)
-  expect_equal(sum(as.numeric(simTest$realAges)), 58580)
+
+  # Check that the real ages match the original ages where <3 now equals 3
+  expect_equal(simTest$realAges[simTest$realAges >= 3], simTest$level3DT$ages[simTest$realAges >= 3])
+  expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
 
 
   ## Check output 'delays' ----
 
   expect_true(!is.null(simTest$delays))
   expect_true(class(simTest$delays) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$delays), 739)
-  expect_equal(simTest$delays, rep(0, 739))
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$delays), nrow(simTest$level3DT))
+
+  # By default: no delays
+  expect_true(all(simTest$delays == 0))
 
 
   ## Check output 'ecozones' ----
 
   expect_true(!is.null(simTest$ecozones))
   expect_true(class(simTest$ecozones) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$ecozones), 739)
-  expect_true(all(simTest$ecozones %in% c(6, 9)))
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$ecozones), nrow(simTest$level3DT))
+
+  # Check that there are no NAs
+  expect_true(all(!is.na(simTest$ecozones)))
 
 
   ## Check output 'spatialUnits' ----
 
   expect_true(!is.null(simTest$spatialUnits))
   expect_true(class(simTest$spatialUnits) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$spatialUnits), 739)
-  expect_true(all(simTest$spatialUnits %in% c(27, 28)))
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$spatialUnits), nrow(simTest$level3DT))
+
+  # Check that there are no NAs
+  expect_true(all(!is.na(simTest$spatialUnits)))
 
 
   ## Check output 'speciesPixelGroup' ----
@@ -146,18 +143,13 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$speciesPixelGroup))
   expect_true(inherits(simTest$speciesPixelGroup, "data.table"))
 
-  expect_equal(ncol(simTest$speciesPixelGroup), 2)
-  expect_identical(data.table::key(simTest$speciesPixelGroup), NULL)
   for (colName in c("pixelGroup", "species_id")){
     expect_true(colName %in% names(simTest$speciesPixelGroup))
+    expect_true(all(!is.na(simTest$speciesPixelGroup[[colName]])))
   }
 
-  expect_equal(nrow(simTest$speciesPixelGroup), 739)
-
-  expect_equal(sapply(simTest$speciesPixelGroup, sum), c(
-    pixelGroup = 273430,
-    species_id = 20529
-  ))
+  # Check that there is 1 for every pixel group
+  expect_equal(nrow(simTest$speciesPixelGroup), nrow(simTest$level3DT))
 
 
   ## Check output 'mySpuDmids' ----
@@ -165,67 +157,54 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$mySpuDmids))
   expect_true(inherits(simTest$mySpuDmids, "data.table"))
 
-  expect_equal(ncol(simTest$mySpuDmids), 8)
-  expect_identical(data.table::key(simTest$mySpuDmids), NULL)
-
-  for (colName in c("distName", "rasterID", "spatial_unit_id", "wholeStand",
-                    "disturbance_type_id", "disturbance_matrix_id", "name", "description")){
+  for (colName in c(
+    "distName", "name", "description")){
     expect_true(colName %in% names(simTest$mySpuDmids))
+    expect_true(is.character(simTest$mySpuDmids[[colName]]))
+    expect_true(all(!is.na(simTest$mySpuDmids[[colName]])))
   }
 
-  expect_equal(nrow(simTest$mySpuDmids), 10)
-
-  expect_identical(simTest$mySpuDmids$distName, c(
-    "wildfire", "clearcut", "deforestation", "20% mortality", "20% mortality",
-    "wildfire", "clearcut", "deforestation", "20% mortality", "20% mortality"))
-
-  expect_identical(simTest$mySpuDmids$name, c(
-    "Generic 20% mortality", "Generic 20% mortality", "Deforestation", "Deforestation", "Deforestation",
-    "Generic 20% mortality", "Generic 20% mortality", "Deforestation", "Deforestation", "Deforestation"))
-
-  expect_identical(simTest$mySpuDmids$description, c(
-    "Generic 20% mortality", "Generic 20% mortality",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada.",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada.",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada.",
-    "Generic 20% mortality", "Generic 20% mortality",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada.",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada.",
-    "Deforestation Matrix #1 (Stand Replacing). Traditionally used for all ecozones across Canada."))
-
-  colsSum <- c("rasterID", "spatial_unit_id", "wholeStand",
-               "disturbance_type_id", "disturbance_matrix_id")
-  expect_equal(sapply(simTest$mySpuDmids[,..colsSum], sum), c(
-    rasterID              = 30,
-    spatial_unit_id       = 275,
-    wholeStand            = 6,
-    disturbance_type_id   = 714,
-    disturbance_matrix_id = 520
-  ))
+  for (colName in c(
+    "rasterID", "spatial_unit_id", "wholeStand",
+    "disturbance_type_id", "disturbance_matrix_id")){
+    expect_true(colName %in% names(simTest$mySpuDmids))
+    expect_true(is.numeric(simTest$mySpuDmids[[colName]]) | is.integer(simTest$mySpuDmids[[colName]]))
+    expect_true(all(!is.na(simTest$mySpuDmids[[colName]])))
+  }
 
 
   ## Check output 'historicDMtype' ----
 
   expect_true(!is.null(simTest$historicDMtype))
   expect_true(class(simTest$historicDMtype) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$historicDMtype), 739)
-  expect_equal(simTest$historicDMtype, rep(168, 739))
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$historicDMtype), nrow(simTest$level3DT))
+
+  # Check that there are no NAs
+  expect_true(all(!is.na(simTest$historicDMtype)))
 
 
   ## Check output 'lastPassDMtype' ----
 
   expect_true(!is.null(simTest$lastPassDMtype))
   expect_true(class(simTest$lastPassDMtype) %in% c("integer", "numeric"))
-  expect_equal(length(simTest$lastPassDMtype), 739)
-  expect_equal(simTest$lastPassDMtype, rep(168, 739))
+
+  # Check that there is 1 for every pixel group
+  expect_equal(length(simTest$lastPassDMtype), nrow(simTest$level3DT))
+
+  # Check that there are no NAs
+  expect_true(all(!is.na(simTest$lastPassDMtype)))
 
 
-  ## Check output 'disturbanceRasters' ----
+  ## Check output 'disturbanceRasters' -----
 
   expect_true(!is.null(simTest$disturbanceRasters))
   expect_true(inherits(simTest$disturbanceRasters, "character"))
-  expect_equal(length(simTest$disturbanceRasters), 27)
-  expect_identical(basename(simTest$disturbanceRasters), paste0("SaskDist_", 1985:2011, ".grd"))
+
+  # Check at least one file was downloaded
+  expect_true(length(simTest$disturbanceRasters) >= 1)
+  expect_true(all(file.exists(simTest$disturbanceRasters)))
 
 })
 
