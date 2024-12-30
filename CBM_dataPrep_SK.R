@@ -127,9 +127,6 @@ defineModule(sim, list(
       objectName = "realAges", objectClass = "numeric",
       desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"),
     createsOutput(
-      objectName = "delays", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating regeneration delay post disturbance. Only Spinup."),
-    createsOutput(
       objectName = "ecozones", objectClass = "numeric",
       desc = paste("Vector, one for each stand, indicating the numeric representation",
                    "of the Canadian ecozones, as used in CBM-CFS3")),
@@ -254,15 +251,6 @@ Init <- function(sim) {
   #sim$gcids <- sim$level3DT$gcids
 
   setorderv(level3DT, "pixelGroup")
-
-
-  ## Creating all the vectors for the spinup --------------------------------
-  ##TODO Do we need all these vectors for the spinup?? Check CBM_core.
-   if(!suppliedElsewhere(sim$delays)){
-     sim$delays <- rep.int(0, dim(level3DT)[1])
-     ##TODO insert message saying that regen delays are set at 0
-  }
-
   setkeyv(level3DT, "spatial_unit_id")
   spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 7)])
 
