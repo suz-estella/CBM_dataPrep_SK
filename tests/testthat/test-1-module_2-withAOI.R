@@ -106,16 +106,6 @@ test_that("Module runs with study AOI", {
   expect_true(all(!is.na(simTest$gcids)))
 
 
-  ## Check output 'realAges' ----
-
-  expect_true(!is.null(simTest$realAges))
-  expect_true(class(simTest$realAges) %in% c("integer", "numeric"))
-
-  # Check that the real ages match the original ages where <3 now equals 3
-  expect_equal(simTest$realAges[simTest$realAges >= 3], simTest$level3DT$ages[simTest$realAges >= 3])
-  expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
-
-
   ## Check output 'delays' ----
 
   expect_true(!is.null(simTest$delays))

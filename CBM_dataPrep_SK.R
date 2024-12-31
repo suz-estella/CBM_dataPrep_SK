@@ -124,9 +124,6 @@ defineModule(sim, list(
       objectName = "gcids", objectClass = "numeric",
       desc = "The identification of which growth curves to use on the specific stands provided by the user."),
     createsOutput(
-      objectName = "realAges", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"),
-    createsOutput(
       objectName = "delays", objectClass = "numeric",
       desc = "Vector, one for each stand, indicating regeneration delay post disturbance. Only Spinup."),
     createsOutput(
@@ -152,7 +149,7 @@ defineModule(sim, list(
 
     createsOutput(
       objectName = "ages", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"), #TODO: object does not exist in module
+      desc = "Ages of the stands from the inventory in 1990"), #TODO: object does not exist in module
     createsOutput(
       objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
     createsOutput(
@@ -234,22 +231,6 @@ Init <- function(sim) {
 
   ## End data.table for simulations-------------------------------------------
 
-
-  ## TODO: problem with ages<=1
-  #####################################################
-  # in SK: to solve why growth curve id 52 (white birch, good # productivity) will not
-  #run with ages= c(0,1,2) it gets stuck in the spinup need to set ages to 3. Tried ages==1, and
-  #ages==2. Maybe because the first few years of growth are 0 ? (to check) it
-  #does not grow and it does not fill-up the soil pools.
-  #work for this problem for most curves for now: this is from SK runs
-  #sim$level3DT[ages==0 & growth_curve_component_id==52,ages:=3]
-  #sim$level3DT[ages <= 1, ages := 3]
-  # in RIA: won't run for ages 0 or 1 with growth 0, had to change it to two
-  # realAges are used to restore the correct ages in CBM_core postspinup event
-  ######################################
-
-  sim$realAges <- level3DT[, ages]
-  level3DT[ages <= 3, ages := 3]
   ## TOOLS TO DEBUG C++ Spinup() fnct
   #sim$gcids <- sim$level3DT$gcids
 
