@@ -234,27 +234,12 @@ Init <- function(sim) {
 
   ## End data.table for simulations-------------------------------------------
 
-
-  ## TODO: problem with ages<=1
-  #####################################################
-  # in SK: to solve why growth curve id 52 (white birch, good # productivity) will not
-  #run with ages= c(0,1,2) it gets stuck in the spinup need to set ages to 3. Tried ages==1, and
-  #ages==2. Maybe because the first few years of growth are 0 ? (to check) it
-  #does not grow and it does not fill-up the soil pools.
-  #work for this problem for most curves for now: this is from SK runs
-  #sim$level3DT[ages==0 & growth_curve_component_id==52,ages:=3]
-  #sim$level3DT[ages <= 1, ages := 3]
-  # in RIA: won't run for ages 0 or 1 with growth 0, had to change it to two
-  # realAges are used to restore the correct ages in CBM_core postspinup event
-  ######################################
-
+  # Create 'realAges' output object and set ages to be >= 3
+  ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
   sim$realAges <- level3DT[, ages]
   level3DT[ages <= 3, ages := 3]
-  ## TOOLS TO DEBUG C++ Spinup() fnct
-  #sim$gcids <- sim$level3DT$gcids
 
   setorderv(level3DT, "pixelGroup")
-
 
   ## Creating all the vectors for the spinup --------------------------------
   ##TODO Do we need all these vectors for the spinup?? Check CBM_core.
