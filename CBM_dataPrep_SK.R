@@ -156,12 +156,6 @@ defineModule(sim, list(
     createsOutput(
       objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
     createsOutput(
-      objectName = "minRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "maxRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating maximum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
       objectName = "returnIntervals", objectClass = "numeric",
       desc = "Vector, one for each stand, indicating the fixed fire return interval. Only Spinup."), #TODO: object does not exist in module
   )
