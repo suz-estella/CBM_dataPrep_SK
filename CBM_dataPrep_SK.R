@@ -153,8 +153,6 @@ defineModule(sim, list(
     createsOutput(
       objectName = "ages", objectClass = "numeric",
       desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
   )
 ))
 
