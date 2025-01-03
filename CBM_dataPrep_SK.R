@@ -64,35 +64,35 @@ defineModule(sim, list(
       objectName = "cbmAdminURL", objectClass = "character",
       desc = "URL for cbmAdmin"),
     expectsInput(
-      objectName = "masterRaster", objectClass = "raster",
+      objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
       desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."),
     expectsInput(
-      objectName = "ageRaster", objectClass = "raster",
+      objectName = "ageRaster", objectClass = "SpatRaster",
       desc = "Raster ages for each pixel",
       sourceURL = "https://drive.google.com/file/d/1hylk0D1vO19Dpg4zFtnSNhnyYP4j-bEA"),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character",
       desc = "URL for ageRaster - optional, need this or a ageRaster"),
     expectsInput(
-      objectName = "gcIndexRaster", objectClass = "raster",
+      objectName = "gcIndexRaster", objectClass = "SpatRaster",
       desc = "Raster giving the growth curve value for each pixel",
       sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character",
       desc = "URL for gcIndexRaste - optional, need this or a ageRaster"),
     expectsInput(
-      objectName = "spuRaster", objectClass = "raster",
+      objectName = "spuRaster", objectClass = "SpatRaster",
       desc = "Raster has spatial units for each pixel",
       sourceURL = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed"),
     expectsInput(
       objectName = "spuRasterURL", objectClass = "character",
       desc = "URL for spuRaster"),
     expectsInput(
-      objectName = "ecoRaster", objectClass = "raster",
+      objectName = "ecoRaster", objectClass = "SpatRaster",
       desc = "Raster has ecozones for each pixel",
       sourceURL = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"),
     expectsInput(
