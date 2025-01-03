@@ -156,9 +156,6 @@ defineModule(sim, list(
     createsOutput(
       objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
     createsOutput(
-      objectName = "nStands", objectClass = "numeric",
-      desc = "not really the number of stands, but the number of pixel groups"), #TODO: object does not exist in module
-    createsOutput(
       objectName = "minRotations", objectClass = "numeric",
       desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."), #TODO: object does not exist in module
     createsOutput(
