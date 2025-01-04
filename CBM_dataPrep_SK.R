@@ -147,26 +147,7 @@ defineModule(sim, list(
       desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
     createsOutput(
       objectName = "lastPassDMtype", objectClass = "numeric",
-      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
-
-
-    createsOutput(
-      objectName = "ages", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "nStands", objectClass = "numeric",
-      desc = "not really the number of stands, but the number of pixel groups"), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "minRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "maxRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating maximum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "returnIntervals", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating the fixed fire return interval. Only Spinup."), #TODO: object does not exist in module
+      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event.")
   )
 ))
 
