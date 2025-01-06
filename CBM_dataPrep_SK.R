@@ -374,46 +374,7 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
 
-  ##OLD - delete once everything works for the SK managed forests.
-  # # if we chose to not use the RSQLite library in this module, and extract
-  # # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
-  # # then $sqlDir and $dbPath are not needed.
-  # if (!suppliedElsewhere(sim$sqlDir)) {
-  #   sim$sqlDir <- file.path(dPath, "cbm_defaults") ##TODO: this needs to be updated with the new version of cbm_defaults
-  # }
-  #
-  # if (!suppliedElsewhere(sim$dbPath)) {
-  #   sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db") ##TODO: this needs to be updated with the new version of cbm_defaults
-  # }
-  #
-  # # if (!suppliedElsewhere(sim$cbmData)) {
-  # #   spatialUnitIds <- as.matrix(getTable("spatialUnitIds.sql", sim$dbPath, sim$sqlDir))
-  # #   disturbanceMatrix <- as.matrix(getTable("disturbanceMatrix.sql", sim$dbPath, sim$sqlDir))
-  # #   sim$cbmData <- new("dataset",
-  # #     turnoverRates = as.matrix(getTable("turnoverRates.sql", sim$dbPath, sim$sqlDir)),
-  # #     rootParameters = as.matrix(getTable("rootParameters.sql", sim$dbPath, sim$sqlDir)),
-  # #     decayParameters = as.matrix(getTable("decayParameters.sql", sim$dbPath, sim$sqlDir)),
-  # #     spinupParameters = as.matrix(getTable("spinupParameters.sql", sim$dbPath, sim$sqlDir)),
-  # #     climate = as.matrix(getTable("climate.sql", sim$dbPath, sim$sqlDir)),
-  # #     spatialUnitIds = spatialUnitIds,
-  # #     slowAGtoBGTransferRate = as.matrix(0.006),
-  # #     biomassToCarbonRate = as.matrix(0.5),
-  # #     stumpParameters = as.matrix(getTable("stumpParameters.sql", sim$dbPath, sim$sqlDir)),
-  # #     overmatureDeclineParameters = as.matrix(getTable("overmaturedecline.sql", sim$dbPath, sim$sqlDir)),
-  # #     disturbanceMatrix = disturbanceMatrix,
-  # #     disturbanceMatrixAssociation = as.matrix(getTable("disturbanceMatrixAssociation.sql", sim$dbPath, sim$sqlDir)),
-  # #     disturbanceMatrixValues = as.matrix(getTable("disturbanceMatrixValues.sql", sim$dbPath, sim$sqlDir)),
-  # #     landclasses = as.matrix(getTable("landclasses.sql", sim$dbPath, sim$sqlDir)),
-  # #     pools = as.matrix(getTable("pools.sql", sim$dbPath, sim$sqlDir)),
-  # #     domPools = as.matrix(getTable("domPools.sql", sim$dbPath, sim$sqlDir))
-  # #   )
-  # # }
-  # if (!suppliedElsewhere(sim$pooldef)) {
-  #   sim$pooldef <- CBMutils::.pooldef
-  #   sim$poolCount <- length(sim$pooldef)
-  # }
-
-  ## Input data tables ----
+  ## Data table inputs ----
 
   # 1. Growth and yield
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
