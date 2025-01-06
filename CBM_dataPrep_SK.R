@@ -413,7 +413,7 @@ Init <- function(sim) {
   #   sim$poolCount <- length(sim$pooldef)
   # }
 
-  # user provided data tables (3)------------------------------------------------------
+  ## Input data tables ----
 
   # 1. Growth and yield
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
@@ -433,7 +433,7 @@ Init <- function(sim) {
 
       sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
                                  destinationPath = inputPath(sim),
-                                 fun = "data.table::fread")
+                                 fun = data.table::fread)
     }
 
     reqCols <- c("gcids", "Age", "MerchVolume")
@@ -444,47 +444,75 @@ Init <- function(sim) {
   }else{
 
     message("User has not supplied growth curves ('userGcM3' or 'userGcM3URL'). ",
-            "Defaults for Saskatchen will be used.")
+            "Defaults for Saskatchewan will be used.")
 
     sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
                                destinationPath = inputPath(sim),
                                targetFile = "userGcM3.csv",
-                               fun = "data.table::fread")
+                               fun = data.table::fread)
     names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
 
   }
 
-  # 2. Disturbance information - see disturbance raster below
-  # this may be provided by the user, by the defaults or by other modules/family
-  # of modules. It is the link between the spatial location of the disturbance
-  # (like a raster value) and the disturbance name.
-  if (!suppliedElsewhere("userDist", sim)) {
-    if (!suppliedElsewhere(sim$userDistFile)) {
-      message("There is no disturbance information provided; defaults for the Saskatchewan example run will be used.")
+  # 2. Disturbance information
+  if (suppliedElsewhere("userDist", sim) | suppliedElsewhere("userDistURL", sim)){
 
-    if (!suppliedElsewhere("userDistURL", sim)) {
-      sim$userDistURL <- extractURL("userDist")
+    if (suppliedElsewhere("userDist", sim)){
+
+      if (!inherits(sim$userDist, "data.table")){
+
+        sim$userDist <- tryCatch(
+          data.table::as.data.table(sim$userDist),
+          error = function(e) stop(
+            "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("userDistURL", sim)){
+
+      sim$userDist <- prepInputs(url = sim$userDistURL,
+                                 destinationPath = inputPath(sim),
+                                 fun = data.table::fread)
     }
-    sim$userDist <- prepInputs(url = sim$userDistURL,
+
+  }else{
+
+    message("User has not supplied disturbance information ('userDist' or 'userDistURL'). ",
+            "Defaults for Saskatchewan will be used.")
+
+    sim$userDist <- prepInputs(url = extractURL("userDist"),
+                               destinationPath = inputPath(sim),
                                targetFile = "userDist.csv",
-                               destinationPath = inputPath(sim),
-                               fun = fread)
-    }
+                               fun = data.table::fread)
   }
 
-  # 3. cbmAdmin needed if the user is not running CBM_vol2biomass module.
+  # 3. CBM admin
+  if (suppliedElsewhere("cbmAdmin", sim) | suppliedElsewhere("cbmAdminURL", sim)){
 
-  if (!suppliedElsewhere("cbmAdmin", sim)) {
-    if (!suppliedElsewhere("cbmAdminURL", sim)) {
-      sim$cbmAdminURL <- extractURL("cbmAdmin")
+    if (suppliedElsewhere("cbmAdmin", sim)){
+
+      if (!inherits(sim$cbmAdmin, "data.table")){
+
+        sim$cbmAdmin <- tryCatch(
+          data.table::as.data.table(sim$cbmAdmin),
+          error = function(e) stop(
+            "'cbmAdmin' could not be converted to data.table: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("cbmAdminURL", sim)){
+
+      sim$cbmAdmin <- prepInputs(url = sim$cbmAdminURL,
+                                 destinationPath = inputPath(sim),
+                                 fun = data.table::fread)
     }
-    sim$cbmAdmin <- prepInputs(url = sim$cbmAdminURL,
+
+  }else{
+
+    sim$cbmAdmin <- prepInputs(url = extractURL("cbmAdmin"),
+                               destinationPath = inputPath(sim),
                                targetFile = "cbmAdmin.csv",
-                               destinationPath = inputPath(sim),
-                               fun = fread)
+                               fun = data.table::fread)
   }
 
-  # END user provided data tables (3)------------------------------------------------------
 
   # user provided rasters or spatial information------------------------
 
