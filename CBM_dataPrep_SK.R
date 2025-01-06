@@ -419,7 +419,17 @@ Init <- function(sim) {
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
   if (suppliedElsewhere("userGcM3", sim) | suppliedElsewhere("userGcM3URL", sim)){
 
-    if (!suppliedElsewhere("userGcM3", sim) & suppliedElsewhere("userGcM3URL", sim)){
+    if (suppliedElsewhere("userGcM3", sim)){
+
+      if (!inherits(sim$userGcM3, "data.table")){
+
+        sim$userGcM3 <- tryCatch(
+          data.table::as.data.table(sim$userGcM3),
+          error = function(e) stop(
+            "'userGcM3' could not be converted to data.table: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("userGcM3URL", sim)){
 
       sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
                                  destinationPath = inputPath(sim),
