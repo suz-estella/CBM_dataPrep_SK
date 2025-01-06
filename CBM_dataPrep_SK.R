@@ -415,26 +415,34 @@ Init <- function(sim) {
 
   # user provided data tables (3)------------------------------------------------------
 
-  # 1. growth and yield information
-  # userGcM3 and userGcM3URL, these files are the m3/ha and age info by growth
-  # curve ID, columns should be GrowthCurveComponentID	Age	MerchVolume
-  ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
-  if (!suppliedElsewhere("userGcM3", sim)) {
-    if (!suppliedElsewhere("userGcM3URL", sim)) {
-      sim$userGcM3URL <- extractURL("userGcM3")
+  # 1. Growth and yield
+  ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
+  if (suppliedElsewhere("userGcM3", sim) | suppliedElsewhere("userGcM3URL", sim)){
+
+    if (!suppliedElsewhere("userGcM3", sim) & suppliedElsewhere("userGcM3URL", sim)){
+
+      sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
+                                 destinationPath = inputPath(sim),
+                                 fun = "data.table::fread")
     }
-    sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
+
+    reqCols <- c("gcids", "Age", "MerchVolume")
+    if (!all(reqCols %in% names(sim$userGcM3))) stop(
+      "'userGcM3' must have the following columns: ",
+      paste(shQuote(reqCols), collapse = ", "))
+
+  }else{
+
+    message("User has not supplied growth curves ('userGcM3' or 'userGcM3URL'). ",
+            "Defaults for Saskatchen will be used.")
+
+    sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
                                destinationPath = inputPath(sim),
                                targetFile = "userGcM3.csv",
                                fun = "data.table::fread")
     names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
-    message(
-      "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
-      "The default will be used which is for a region in Saskatchewan."
-    )
+
   }
-
-
 
   # 2. Disturbance information - see disturbance raster below
   # this may be provided by the user, by the defaults or by other modules/family
