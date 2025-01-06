@@ -52,7 +52,7 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$spatialDT))
   expect_true(inherits(simTest$spatialDT, "data.table"))
 
-  for (colName in c("ages", "spatial_unit_id", "pixelIndex", "gcids", "ecozones", "pixelGroup")){
+  for (colName in c("pixelIndex", "pixelGroup", "ages", "spatial_unit_id", "gcids", "ecozones")){
     expect_true(colName %in% names(simTest$spatialDT))
     expect_true(all(!is.na(simTest$spatialDT[[colName]])))
   }
@@ -65,12 +65,33 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$level3DT))
   expect_true(inherits(simTest$level3DT, "data.table"))
 
-  for (colName in c("spatial_unit_id", "ages", "gcids", "ecozones", "pixelGroup", "return_interval")){
+  for (colName in c("pixelGroup", "ages", "spatial_unit_id", "gcids", "ecozones", "return_interval")){
     expect_true(colName %in% names(simTest$level3DT))
     expect_true(all(!is.na(simTest$level3DT[[colName]])))
   }
 
   expect_identical(data.table::key(simTest$level3DT), "pixelGroup")
+
+  # Expect that there is 1 row for every unique combination of key attributes in 'spatialDT'
+  expect_equal(
+    nrow(simTest$level3DT),
+    nrow(unique(simTest$spatialDT[, c("ages", "spatial_unit_id", "gcids", "ecozones")]))
+  )
+
+
+  ## Check output 'speciesPixelGroup' ----
+
+  expect_true(!is.null(simTest$speciesPixelGroup))
+  expect_true(inherits(simTest$speciesPixelGroup, "data.table"))
+
+  for (colName in c("pixelGroup", "species_id")){
+    expect_true(colName %in% names(simTest$speciesPixelGroup))
+    expect_true(all(!is.na(simTest$speciesPixelGroup[[colName]])))
+  }
+
+  # Check that there is 1 for every pixel group
+  expect_equal(nrow(simTest$speciesPixelGroup), nrow(simTest$level3DT))
+  expect_equal(sort(simTest$speciesPixelGroup$pixelGroup), simTest$level3DT$pixelGroup)
 
 
   ## Check output 'curveID' ----
@@ -78,6 +99,7 @@ test_that("Module runs with defaults", {
   expect_true(!is.null(simTest$curveID))
   expect_true(length(simTest$curveID) >= 1)
   expect_true("gcids" %in% simTest$curveID)
+  expect_true(all(simTest$curveID %in% names(simTest$level3DT)))
 
 
   ## Check output 'gcids' ----
@@ -90,28 +112,6 @@ test_that("Module runs with defaults", {
 
   # Check that there are no NAs
   expect_true(all(!is.na(simTest$gcids)))
-
-
-  ## Check output 'realAges' ----
-
-  expect_true(!is.null(simTest$realAges))
-  expect_true(class(simTest$realAges) %in% c("integer", "numeric"))
-
-  # Check that the real ages match the original ages where <3 now equals 3
-  expect_equal(simTest$realAges[simTest$realAges >= 3], simTest$level3DT$ages[simTest$realAges >= 3])
-  expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
-
-
-  ## Check output 'delays' ----
-
-  expect_true(!is.null(simTest$delays))
-  expect_true(class(simTest$delays) %in% c("integer", "numeric"))
-
-  # Check that there is 1 for every pixel group
-  expect_equal(length(simTest$delays), nrow(simTest$level3DT))
-
-  # By default: no delays
-  expect_true(all(simTest$delays == 0))
 
 
   ## Check output 'ecozones' ----
@@ -138,18 +138,26 @@ test_that("Module runs with defaults", {
   expect_true(all(!is.na(simTest$spatialUnits)))
 
 
-  ## Check output 'speciesPixelGroup' ----
+  ## Check output 'realAges' ----
 
-  expect_true(!is.null(simTest$speciesPixelGroup))
-  expect_true(inherits(simTest$speciesPixelGroup, "data.table"))
+  expect_true(!is.null(simTest$realAges))
+  expect_true(class(simTest$realAges) %in% c("integer", "numeric"))
 
-  for (colName in c("pixelGroup", "species_id")){
-    expect_true(colName %in% names(simTest$speciesPixelGroup))
-    expect_true(all(!is.na(simTest$speciesPixelGroup[[colName]])))
-  }
+  # Check that the real ages match the original ages where <3 now equals 3
+  expect_equal(simTest$realAges[simTest$realAges >= 3], simTest$level3DT$ages[simTest$realAges >= 3])
+  expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
+
+
+  ## Check output 'delays' ----
+
+  expect_true(!is.null(simTest$delays))
+  expect_true(class(simTest$delays) %in% c("integer", "numeric"))
 
   # Check that there is 1 for every pixel group
-  expect_equal(nrow(simTest$speciesPixelGroup), nrow(simTest$level3DT))
+  expect_equal(length(simTest$delays), nrow(simTest$level3DT))
+
+  # By default: no delays
+  expect_true(all(simTest$delays == 0))
 
 
   ## Check output 'mySpuDmids' ----
