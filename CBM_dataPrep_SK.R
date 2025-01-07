@@ -198,12 +198,14 @@ defineModule(sim, list(
     createsOutput(
       objectName = "historicDMtype", objectClass = "numeric",
       desc = paste(
-        "Historical disturbance type (1 = wildfire) for each pixel group.",
+        "Historical disturbance type for each pixel group.",
+        "Examples: 1 = wildfire; 2 = clearcut.",
         "Required input to CBM_core.")),
     createsOutput(
       objectName = "lastPassDMtype", objectClass = "numeric",
       desc = paste(
-        "Last pass disturbance type (1 = wildfire) for each pixel group.",
+        "Last pass disturbance type for each pixel group.",
+        "Examples: 1 = wildfire; 2 = clearcut.",
         "Required input to CBM_core."))
   )
 ))
