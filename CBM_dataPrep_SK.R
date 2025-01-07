@@ -132,7 +132,7 @@ defineModule(sim, list(
     createsOutput(
       objectName = "level3DT", objectClass = "data.table",
       desc = paste(
-        "Table defining spinup pixel groups with 1 row for every pixel group.",
+        "Table associating pixel groups with their key attributes.",
         "Required input to CBM_vol2biomass and CBM_core."),
       columns = c(
         pixelGroup      = "Pixel group ID",
