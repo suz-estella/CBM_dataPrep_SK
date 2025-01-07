@@ -43,10 +43,12 @@
   }
 }
 
-# Helper function: suppress messages; muffle common warnings
+# Helper function: suppress output and messages; muffle common warnings
 .SpaDESwithCallingHandlers <- function(expr, ...){
 
   if (testthat::is_testing()){
+
+    withr::local_output_sink(tempfile())
 
     withCallingHandlers(
       expr,
