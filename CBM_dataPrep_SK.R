@@ -392,9 +392,11 @@ Init <- function(sim) {
 
     }else if (suppliedElsewhere("userGcM3URL", sim)){
 
-      sim$userGcM3 <- prepInputs(url = sim$userGcM3URL,
-                                 destinationPath = inputPath(sim),
-                                 fun = data.table::fread)
+      sim$userGcM3 <- prepInputs(
+        destinationPath = inputPath(sim),
+        url = sim$userGcM3URL,
+        fun = data.table::fread
+      )
     }
 
     reqCols <- c("gcids", "Age", "MerchVolume")
@@ -405,14 +407,15 @@ Init <- function(sim) {
   }else{
 
     message("User has not supplied growth curves ('userGcM3' or 'userGcM3URL'). ",
-            "Defaults for Saskatchewan will be used.")
+            "Default for Saskatchewan will be used.")
 
-    sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
-                               destinationPath = inputPath(sim),
-                               targetFile = "userGcM3.csv",
-                               fun = data.table::fread)
+    sim$userGcM3 <- prepInputs(
+      destinationPath = inputPath(sim),
+      url        = extractURL("userGcM3"),
+      targetFile = "userGcM3.csv",
+      fun        = data.table::fread
+    )
     names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
-
   }
 
   # 2. Disturbance information
@@ -430,20 +433,24 @@ Init <- function(sim) {
 
     }else if (suppliedElsewhere("userDistURL", sim)){
 
-      sim$userDist <- prepInputs(url = sim$userDistURL,
-                                 destinationPath = inputPath(sim),
-                                 fun = data.table::fread)
+      sim$userDist <- prepInputs(
+        destinationPath = inputPath(sim),
+        url = sim$userDistURL,
+        fun = data.table::fread
+      )
     }
 
   }else{
 
     message("User has not supplied disturbance information ('userDist' or 'userDistURL'). ",
-            "Defaults for Saskatchewan will be used.")
+            "Default for Saskatchewan will be used.")
 
-    sim$userDist <- prepInputs(url = extractURL("userDist"),
-                               destinationPath = inputPath(sim),
-                               targetFile = "userDist.csv",
-                               fun = data.table::fread)
+    sim$userDist <- prepInputs(
+      destinationPath = inputPath(sim),
+      url        = extractURL("userDist"),
+      targetFile = "userDist.csv",
+      fun        = data.table::fread
+    )
   }
 
   # 3. CBM admin
@@ -461,166 +468,256 @@ Init <- function(sim) {
 
     }else if (suppliedElsewhere("cbmAdminURL", sim)){
 
-      sim$cbmAdmin <- prepInputs(url = sim$cbmAdminURL,
-                                 destinationPath = inputPath(sim),
-                                 fun = data.table::fread)
+      sim$cbmAdmin <- prepInputs(
+        destinationPath = inputPath(sim),
+        url = sim$cbmAdminURL,
+        fun = data.table::fread
+      )
     }
 
   }else{
 
-    sim$cbmAdmin <- prepInputs(url = extractURL("cbmAdmin"),
-                               destinationPath = inputPath(sim),
-                               targetFile = "cbmAdmin.csv",
-                               fun = data.table::fread)
-  }
+    message("User has not supplied disturbance information ('cbmAdmin' or 'cbmAdminURL'). ",
+            "Default for Canada will be used.")
 
-
-  # user provided rasters or spatial information------------------------
-
-  ## Rasters
-  ## user provides raster to match (masterRaster) which is a raster for the
-  ## study area, it will define the crs etc, for all other layers. The user also
-  ## provides age raster, and a raster linking each growth curve to pixels (gcIndex).
-  ## Using the masterRaster, the ecozone raster is made (Canadian ecozones) and the
-  ## spatial unit raster. The spatial units are a CBM-CFS3 specific location
-  ## that is the intersection of the ecozones and administrative boundaries.
-  ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
-  ## parameters to the right location (example: decomposition rates).
-  ##
-
-  # 1. Raster to match (masterRaster). This is the study area.
-  ##TODO remove this note when we are done making everything work for the small
-  ##study area in SK.
-  #NOTE: we are providing the masterRaster in the globalCore1.R. This section is
-  #being slipped.
-      if (!suppliedElsewhere("masterRaster", sim)) {
-        if (!suppliedElsewhere("masterRasterURL", sim)) {
-    sim$masterRasterURL <- extractURL("masterRaster")
-
-      ##TODO: why is this
-      message(
-        "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
-        "masterRaster is going to be read from the default URL given in the inputObjects for ",
-        currentModule(sim)
-      )
-
-      ##TODO this is the masterRaster for all of SK managed forests..why is it
-      ##not exactly 30 m res? Need to fix that.
-      sim$masterRaster <- prepInputs(
-        url = sim$masterRasterURL,
-        fun = "terra::rast",
-        destinationPath = inputPath(sim)
-      )|> Cache()
-
-        }
-
-    }
-
-  # 2. Age raster from inventory or from user as a vector
-  if(!suppliedElsewhere(sim$ages)){
-    if (!suppliedElsewhere(sim$ageRaster)) {
-      if (!suppliedElsewhere(sim$ageRasterURL)) {
-        sim$ageRasterURL <- extractURL("ageRaster")
-      }
-      sim$ageRaster <- prepInputs(
-        url = sim$ageRasterURL,
-        fun = "terra::rast",
-        to = sim$masterRaster,
-        method = "near", # need integers
-        destinationPath = inputPath(sim)
-      )|> Cache()
-      ## TODO: put in a message to out pointing the max age (this has to be
-      ## sinked to the max age on the growth curve max age for the spinup)
-      # maxAge <- max(sim$ageRaster)
-      # message(max age on the raster is XX)
-    }
-    ##or max age from vector
-  }
-
-  # 3. What growth curve should be applied to what pixels? Provide a raster or a
-  # vector
-  if(!suppliedElsewhere(sim$gcids)){
-    if (!suppliedElsewhere(sim$gcIndexRaster)) {
-      if (!suppliedElsewhere(sim$gcIndexRasterURL)) {
-        sim$gcIndexRasterURL <- extractURL("gcIndexRaster")
-      }
-      sim$gcIndexRaster <- prepInputs(
-        url = sim$gcIndexRasterURL,
-        fun = "terra::rast",
-        to = sim$masterRaster,
-        method = "near", # need integers
-        destinationPath = inputPath(sim))|> Cache()
-    }
-  }
-
-  # 4. Spatial Unit raster. This takes the masterRaster (study area) and figures
-  # out what CBM-specific spatial units each pixels. This determines some
-  # defaults CBM-parameters across Canada.
-  # if(!suppliedElsewhere(sim$spatialUnits)){
-  if (!suppliedElsewhere(sim$spuRaster)) {
-    if (!suppliedElsewhere(sim$spuRasterURL)) {
-      sim$spuRasterURL <- extractURL("spuRaster")
-    }
-    ##TODO Need to check that there SPU match what the CAT is using.
-    # The current PSPU data for the CAT is here:
-    #\\vic-fas2\cat\NFCMARS_admin\Data\SpatialFramework\PSPUS.zip
-    # - Scott put that same shapefile on a googleDrive here is a link to PSPUS.zip
-    # https://drive.google.com/file/d/1Z_pMwhylqMkKZfOArATaAz9pUVNXtBAd/view?usp=sharing
-    # - we need to compare those two files.
-    canadaSpu <- prepInputs(
-      targetFile = "spUnit_Locator.shp",
-      url = sim$spuRasterURL,
+    sim$cbmAdmin <- prepInputs(
       destinationPath = inputPath(sim),
-      alsoExtract = "similar")|> Cache()
-
-    spuShp <- Cache(postProcess,
-                    canadaSpu,
-                    to = sim$masterRaster,
-                    method = "near", # need integers
-                    #targetCRS = terra::crs(sim$masterRaster),
-                    useCache = FALSE, filename2 = NULL
-    ) |> st_collection_extract("POLYGON")
-
-    sim$spuRaster <- terra::rasterize(terra::vect(spuShp),
-                                      terra::rast(sim$masterRaster),
-                                      field = "spu_id")
+      url        = extractURL("cbmAdmin"),
+      targetFile = "cbmAdmin.csv",
+      fun        = data.table::fread
+    )
   }
-  # }
 
-  # 5. Ecozone raster. This takes the masterRaster (study area) and figures
-  # out what ecozones each pixels are in. This determines some
-  # defaults CBM-parameters across Canada.
-  # if(!suppliedElsewhere(sim$ecozones)){
-  if (!suppliedElsewhere(sim$ecoRaster)) {
-    if (!suppliedElsewhere(sim$ecoRasterURL)) {
-      sim$ecoRasterURL <- extractURL("ecoRaster")
+
+  ## Spatial inputs ----
+
+  # 1. Master raster
+  if (suppliedElsewhere("masterRaster", sim) | suppliedElsewhere("masterRasterURL", sim)){
+
+    if (suppliedElsewhere("masterRaster", sim)){
+
+      if (!inherits(sim$masterRaster, "SpatRaster")){
+
+        sim$masterRaster <- tryCatch(
+          terra::rast(sim$masterRaster),
+          error = function(e) stop(
+            "'masterRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("masterRasterURL", sim)){
+
+      sim$masterRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url = sim$masterRasterURL,
+        fun = terra::rast
+      ) |> Cache()
     }
-    ecozones <- Cache(prepInputs,
-                      url = sim$ecoRasterURL,
-                      alsoExtract = "similar",
-                      destinationPath = inputPath(sim),
-                      filename1 = "ecozone_shp.zip",
-                      # overwrite = TRUE, ## not needed if filename1 specified
-                      fun = sf::st_read(targetFile, quiet = TRUE), #"terra::vect",
-                      rasterToMatch = sim$masterRaster
-    ) ## ecozones is a SpatVect class object
-    ## TODO: terra::vect fails on some windows machines. Windows does not
-    ## recognize some of the french characters.
-    # ecozones <- terra::vect(ecozones)
 
-    ## DEC 4 2024: this prepInputs call current doesn't work. It is an issue with one of the packages in prepInputs and as of right now only affects this file.
-    ## either there will be a prepInputs fix for this or Camille will find an alternative url to download, whichever comes first.
-    ## For now, download the shapefile here: http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip and save to spadesCBM/inputs.
+  }else{
 
-    sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
+    message("User has not supplied a master raster ('masterRaster' or 'masterRasterURL'). ",
+            "Default for Saskatchewan will be used.")
+
+    sim$masterRaster <- prepInputs(
+      destinationPath = inputPath(sim),
+      url        = extractURL("masterRaster"),
+      targetFile = "ldSp_TestArea.tif",
+      fun        = terra::rast
+    ) |> Cache()
   }
-  # }
 
+  # 2. Age raster
+  if (suppliedElsewhere("ageRaster", sim) | suppliedElsewhere("ageRasterURL", sim)){
 
+    if (suppliedElsewhere("ageRaster", sim)){
 
-  ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
-  if (any(is.na(values(sim$ecoRaster)))) {
-    stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
+      if (!inherits(sim$ageRaster, "SpatRaster")){
+
+        sim$ageRaster <- tryCatch(
+          terra::rast(sim$ageRaster),
+          error = function(e) stop(
+            "'ageRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("ageRasterURL", sim)){
+
+      sim$ageRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = sim$ageRasterURL,
+        targetFile = "age_TestArea.tif",
+        fun        = terra::rast,
+        to         = sim$masterRaster,
+        method     = "near"
+      ) |> Cache()
+    }
+
+  }else{
+
+    message("User has not supplied an age raster ('ageRaster' or 'ageRasterURL'). ",
+            "Default for Saskatchewan will be used.")
+
+    sim$ageRaster <- prepInputs(
+      destinationPath = inputPath(sim),
+      url    = extractURL("ageRaster"),
+      fun    = terra::rast,
+      to     = sim$masterRaster,
+      method = "near"
+    ) |> Cache()
+  }
+
+  # 3. Growth curves
+  if (suppliedElsewhere("gcIndexRaster", sim) | suppliedElsewhere("gcIndexRasterURL", sim)){
+
+    if (suppliedElsewhere("gcIndexRaster", sim)){
+
+      if (!inherits(sim$gcIndexRaster, "SpatRaster")){
+
+        sim$gcIndexRaster <- tryCatch(
+          terra::rast(sim$gcIndexRaster),
+          error = function(e) stop(
+            "'gcIndexRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("gcIndexRasterURL", sim)){
+
+      sim$gcIndexRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = sim$gcIndexRasterURL,
+        targetFile = "gcIndex.tif",
+        fun        = terra::rast,
+        to         = sim$masterRaster,
+        method     = "near"
+      ) |> Cache()
+    }
+
+  }else{
+
+    message("User has not supplied a growth curve raster ('gcIndexRaster' or 'gcIndexRasterURL'). ",
+            "Default for Saskatchewan will be used.")
+
+    sim$gcIndexRaster <- prepInputs(
+      destinationPath = inputPath(sim),
+      url    = extractURL("gcIndexRaster"),
+      fun    = terra::rast,
+      to     = sim$masterRaster,
+      method = "near"
+    ) |> Cache()
+  }
+
+  # 4. Spatial units raster
+  if (suppliedElsewhere("spuRaster", sim) | suppliedElsewhere("spuRasterURL", sim)){
+
+    if (suppliedElsewhere("spuRaster", sim)){
+
+      if (!inherits(sim$spuRaster, "SpatRaster")){
+
+        sim$spuRaster <- tryCatch(
+          terra::rast(sim$spuRaster),
+          error = function(e) stop(
+            "'spuRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("spuRasterURL", sim)){
+
+      sim$spuRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url    = sim$spuRasterURL,
+        fun    = terra::rast,
+        to     = sim$masterRaster,
+        method = "near"
+      ) |> Cache()
+    }
+
+  }else{
+
+    message("User has not supplied a spatial units raster ('spuRaster' or 'spuRasterURL'). ",
+            "Default for Canada will be used.")
+
+    spuSF <- prepInputs(
+      destinationPath = inputPath(sim),
+      url         = extractURL("spuRaster"),
+      filename1   = "spUnit_Locator.zip",
+      targetFile  = "spUnit_Locator.shp",
+      alsoExtract = "similar",
+      fun         = sf::st_read(targetFile, quiet = TRUE),
+      projectTo   = sim$masterRaster,
+      cropTo      = sim$masterRaster
+    ) |> Cache()
+
+    sim$spuRaster <- terra::rasterize(
+      terra::vect(spuSF),
+      sim$masterRaster,
+      field = "spu_id"
+    ) |> Cache()
+  }
+
+  # 5. Ecozones raster
+  if (suppliedElsewhere("ecoRaster", sim) | suppliedElsewhere("ecoRasterURL", sim)){
+
+    if (suppliedElsewhere("ecoRaster", sim)){
+
+      if (!inherits(sim$ecoRaster, "SpatRaster")){
+
+        sim$ecoRaster <- tryCatch(
+          terra::rast(sim$ecoRaster),
+          error = function(e) stop(
+            "'ecoRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
+      }
+
+    }else if (suppliedElsewhere("ecoRasterURL", sim)){
+
+      sim$ecoRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url    = sim$ecoRasterURL,
+        fun    = terra::rast,
+        to     = sim$masterRaster,
+        method = "near"
+      ) |> Cache()
+    }
+
+  }else{
+
+    message("User has not supplied an ecozones raster ('ecoRaster' or 'ecoRasterURL'). ",
+            "Default for Canada will be used.")
+
+    ## 2024-12-04 NOTE:
+    ## Multiple users had issues downloading and extracting this file via prepInputs.
+    ## Downloading the ZIP directly and saving it in the inputs directory works OK.
+    ecoSF <- tryCatch(
+
+      prepInputs(
+        destinationPath = inputPath(sim),
+        url         = extractURL("ecoRaster"),
+        filename1   = "ecozone_shp.zip",
+        targetFile  = "ecozones.shp",
+        alsoExtract = "similar",
+        fun         = sf::st_read(targetFile, quiet = TRUE),
+        projectTo   = sim$masterRaster,
+        cropTo      = sim$masterRaster
+      ) |> Cache(),
+
+      error = function(e) stop(
+        "Canada ecozones Shapefile failed be downloaded and extracted:\n", e$message, "\n\n",
+        "If this error persists, download the ZIP file directly and save it to the inputs directory.",
+        "\nDownload URL: ", extractURL("ecoRaster"),
+        "\nInputs directory: ", normalizePath(inputPath(sim), winslash = "/"),
+        call. = F))
+
+    sim$ecoRaster <- terra::rasterize(
+      terra::vect(ecoSF),
+      sim$masterRaster,
+      field = "ECOZONE"
+    ) |> Cache()
+  }
+
+  # 6. Disturbance rasters
+  if (!suppliedElsewhere("disturbanceRasters", sim)) {
+
+    message("User has not supplied disturbance rasters ('disturbanceRasters'). ",
+            "Default for Saskatchewan will be used.")
+
+    sim$disturbanceRasters <- extractURL("disturbanceRasters")
+
   }
 
   # Summarize raster values into table
@@ -649,27 +746,8 @@ Init <- function(sim) {
     # setnames(sim$allPixDT,names(sim$allPixDT),chgNamesTo)
 
 
-  # 6. Disturbance rasters. The default example is a list of rasters, one for each year.
-  #    But these can be provided by another family of modules in the annual event.
-
-  ## TODO: add a message if no information is provided asking the user if
-  ## disturbances will be provided on a yearly basis.
-  if (!suppliedElsewhere("disturbanceRasters", sim)) {
-    ## download the data and identify the .grd files present
-    out <- preProcess(url = extractURL("disturbanceRasters"),
-                      destinationPath = inputPath(sim),
-                      filename1 = "disturbance_testArea.zip")
-
-    sim$disturbanceRasters <- list.files(
-      file.path(inputPath(sim), "disturbance_testArea"),
-      pattern = "[.]grd$",
-      full.names = TRUE
-    )
-    stopifnot(length(sim$disturbanceRasters) > 0)
-  }
-
-
-  # ! ----- STOP EDITING ----- ! #
+  ## Return simList ----
 
   return(invisible(sim))
+
 }
