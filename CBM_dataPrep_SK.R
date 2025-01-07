@@ -64,44 +64,40 @@ defineModule(sim, list(
       objectName = "cbmAdminURL", objectClass = "character",
       desc = "URL for cbmAdmin"),
     expectsInput(
-      objectName = "masterRaster", objectClass = "raster",
+      objectName = "masterRaster", objectClass = "SpatRaster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
       desc = "URL for `masterRaster` - optional, need this or a `masterRaster` object."),
     expectsInput(
-      objectName = "ageRaster", objectClass = "raster",
+      objectName = "ageRaster", objectClass = "SpatRaster",
       desc = "Raster ages for each pixel",
       sourceURL = "https://drive.google.com/file/d/1hylk0D1vO19Dpg4zFtnSNhnyYP4j-bEA"),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character",
       desc = "URL for ageRaster - optional, need this or a ageRaster"),
     expectsInput(
-      objectName = "gcIndexRaster", objectClass = "raster",
+      objectName = "gcIndexRaster", objectClass = "SpatRaster",
       desc = "Raster giving the growth curve value for each pixel",
       sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character",
       desc = "URL for gcIndexRaste - optional, need this or a ageRaster"),
     expectsInput(
-      objectName = "spuRaster", objectClass = "raster",
+      objectName = "spuRaster", objectClass = "SpatRaster",
       desc = "Raster has spatial units for each pixel",
       sourceURL = "https://drive.google.com/file/d/1D3O0Uj-s_QEgMW7_X-NhVsEZdJ29FBed"),
     expectsInput(
       objectName = "spuRasterURL", objectClass = "character",
       desc = "URL for spuRaster"),
     expectsInput(
-      objectName = "ecoRaster", objectClass = "raster",
+      objectName = "ecoRaster", objectClass = "SpatRaster",
       desc = "Raster has ecozones for each pixel",
       sourceURL = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"),
     expectsInput(
       objectName = "ecoRasterURL", objectClass = "character",
       desc = "URL for ecoRaster"),
-    expectsInput(
-      objectName = "allPixDT", objectClass = "data.table",
-      desc = paste("Data table built for all pixels (incluing NAs) for the four essential raster-based information,",
-                   "growth curve location (`gcID`), ages, ecozones and spatial unit id (CBM-parameter link)")),
     expectsInput(
     objectName = "disturbanceRasters", objectClass = "character",
     desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
@@ -111,62 +107,106 @@ defineModule(sim, list(
 
   outputObjects = bindrows(
     createsOutput(
+      objectName = "allPixDT", objectClass = "data.table",
+      desc = "Table summarizing raster input data with 1 row for every 'masterRaster' pixel (including NAs)",
+      columns = c(
+        pixelIndex      = "'masterRaster' cell index",
+        ages            = "Stand ages extracted from input 'ageRaster'",
+        spatial_unit_id = "Spatial unit IDs extracted from input 'spuRaster'",
+        gcids           = "Growth curve IDs extracted from input 'gcIndexRaster'",
+        ecozones        = "Ecozone IDs extracted from input 'ecoRaster'"
+      )),
+    createsOutput(
       objectName = "spatialDT", objectClass = "data.table",
-      desc = "the table containing one line per pixel"),
+      desc = paste(
+        "Table summarizing raster input data with 1 row for every 'masterRaster' pixel that is not NA",
+        "Required input to CBM_vol2biomass and CBM_core."),
+      columns = c(
+        pixelIndex      = "'masterRaster' cell index",
+        pixelGroup      = "Pixel group ID",
+        ages            = "Stand ages extracted from input 'ageRaster'",
+        spatial_unit_id = "Spatial unit IDs extracted from input 'spuRaster'",
+        gcids           = "Growth curve IDs extracted from input 'gcIndexRaster'",
+        ecozones        = "Ecozone IDs extracted from input 'ecoRaster'"
+      )),
     createsOutput(
       objectName = "level3DT", objectClass = "data.table",
-      desc = paste("the table linking the spu id, with the disturbance_matrix_id and the events.",
-                   "The events are the possible raster values from the disturbance rasters of Wulder and White.")),
-    createsOutput(
-      objectName = "curveID", objectClass = "character",
-      desc = "Vector of column names that together, uniquely define growth curve id"),
-    createsOutput(
-      objectName = "gcids", objectClass = "numeric",
-      desc = "The identification of which growth curves to use on the specific stands provided by the user."),
-    createsOutput(
-      objectName = "realAges", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 saved to replace the ages post spinup"),
-    createsOutput(
-      objectName = "delays", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating regeneration delay post disturbance. Only Spinup."),
-    createsOutput(
-      objectName = "ecozones", objectClass = "numeric",
-      desc = paste("Vector, one for each stand, indicating the numeric representation",
-                   "of the Canadian ecozones, as used in CBM-CFS3")),
-    createsOutput(
-      objectName = "spatialUnits", objectClass = "numeric",
-      desc = "The id given to the intersection of province and ecozones across Canada, linked to the S4 table called cbmData"), # TODO: description out of date
+      desc = paste(
+        "Table associating pixel groups with their key attributes.",
+        "Required input to CBM_vol2biomass and CBM_core."),
+      columns = c(
+        pixelGroup      = "Pixel group ID",
+        ages            = "Stand ages extracted from input 'ageRaster' modified such that all ages are >=3",
+        spatial_unit_id = "Spatial unit IDs extracted from input 'spuRaster'",
+        gcids           = "Growth curve IDs extracted from input 'gcIndexRaster'",
+        ecozones        = "Ecozone IDs extracted from input 'ecoRaster'"
+      )),
     createsOutput(
       objectName = "speciesPixelGroup", objectClass = "data.frame",
-      desc = "This table connects species codes to PixelGroups"),
+      desc = paste(
+        "Table connecting pixel groups to species IDs.",
+        "Required input to CBM_core."),
+      columns = c(
+        pixelGroup = "Pixel group ID",
+        species_id = "Species ID"
+      )),
+    createsOutput(
+      objectName = "curveID", objectClass = "character",
+      desc = paste(
+        "Column names in 'level3DT' that uniquely define each pixel group growth curve ID.",
+        "Required input to CBM_vol2biomass")),
+    createsOutput(
+      objectName = "gcids", objectClass = "factor",
+      desc = paste(
+        "Factor of the growth curve IDs for each pixel group.",
+        "Required input to CBM_vol2biomass")),
+    createsOutput(
+      objectName = "ecozones", objectClass = "numeric",
+      desc = paste(
+        "Ecozone IDs extracted from input 'ecoRaster' for each pixel group.",
+        "Required input to CBM_vol2biomass")),
+    createsOutput(
+      objectName = "spatialUnits", objectClass = "numeric",
+      desc = paste(
+        "Spatial unit IDs extracted from input 'spuRaster' for each pixel group.",
+        "Required input to CBM_vol2biomass")),
+    createsOutput(
+      objectName = "delays", objectClass = "numeric",
+      desc = paste(
+        "Regeneration delay post disturbance for each pixel group.",
+        "Required input to CBM_core.")),
+    createsOutput(
+      objectName = "realAges", objectClass = "numeric",
+      desc = paste(
+        "Stand ages extracted from input 'ageRaster' for each pixel group.",
+        "Required input to CBM_core.")),
     createsOutput(
       objectName = "mySpuDmids", objectClass = "data.frame",
-      desc = "the table containing one line per pixel"),
+      desc = paste(
+        "Table summarizing disturbances possible within the spatial units.",
+        "Required input to CBM_core."),
+      columns = c(
+        distName              = "Disturbance name from 'userDist'",
+        rasterID              = "Raster ID from 'userDist'",
+        wholeStand            = "wholStand flag from 'userDist'",
+        spatial_unit_id       = "Spatial unit ID",
+        disturbance_type_id   = "Disturbance type ID",
+        disturbance_matrix_id = "Disturbance matrix ID",
+        name                  = "Disturbance name",
+        description           = "Disturbance description"
+      )),
     createsOutput(
       objectName = "historicDMtype", objectClass = "numeric",
-      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
+      desc = paste(
+        "Historical disturbance type for each pixel group.",
+        "Examples: 1 = wildfire; 2 = clearcut.",
+        "Required input to CBM_core.")),
     createsOutput(
       objectName = "lastPassDMtype", objectClass = "numeric",
-      desc = "Vector, one for each stand/pixelGroup, indicating historical disturbance type (1 = wildfire). Only used in the spinup event."),
-
-
-    createsOutput(
-      objectName = "ages", objectClass = "numeric",
-      desc = "Ages of the stands from the inventory in 1990 with with ages <=1 changes to 3 for the spinup"), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "pools", objectClass = "matrix", desc = NA), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "nStands", objectClass = "numeric",
-      desc = "not really the number of stands, but the number of pixel groups"), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "minRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating minimum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "maxRotations", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating maximum number of rotations. Only Spinup."), #TODO: object does not exist in module
-    createsOutput(
-      objectName = "returnIntervals", objectClass = "numeric",
-      desc = "Vector, one for each stand, indicating the fixed fire return interval. Only Spinup."), #TODO: object does not exist in module
+      desc = paste(
+        "Last pass disturbance type for each pixel group.",
+        "Examples: 1 = wildfire; 2 = clearcut.",
+        "Required input to CBM_core."))
   )
 ))
 
@@ -185,69 +225,57 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 Init <- function(sim) {
-  ## Rasters----------------------------------------------------------------------
-  ## user provides raster to match (masterRaster) which is a raster for the
-  ## study area, it will define the crs etc, for all other layers. The user also
-  ## provides age raster, and a raster linking each growth curve to pixels (gcIndex).
-  ## Using the masterRaster, the ecozone raster is made (Canadian ecozones) and the
-  ## spatial unit raster. The spatial units are a CBM-CFS3 specific location
-  ## that is the intersection of the ecozones and administrative boundaries.
-  ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
-  ## parameters to the right location (example: decomposition rates).
-  ##
+
+  ## Create sim$allPixDT ----
+
+  # Summarize input raster values into table
+  sim$allPixDT <- data.table(
+    pixelIndex      = 1:ncell(sim$masterRaster),
+    ages            = terra::values(sim$ageRaster)[,1],
+    spatial_unit_id = terra::values(sim$spuRaster)[,1],
+    gcids           = terra::values(sim$gcIndexRaster)[,1],
+    ecozones        = terra::values(sim$ecoRaster)[,1]
+  )
+  setkeyv(sim$allPixDT, "pixelIndex")
+
+
+  ## Create sim$spatialDT ----
 
   spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(gcids),]
 
+  # Create pixel groups: groups of pixels with the same attributes
+  spatialDT$pixelGroup <- LandR::generatePixelGroups(
+    spatialDT, maxPixelGroup = 0, columns = c("ages", "spatial_unit_id", "gcids", "ecozones")
+  )
 
-  ## Create the pixel groups: groups of pixels with the same attributes ---------------
-  setkeyv(spatialDT, "pixelIndex")
-  if(!"pixelGroup" %in% names(spatialDT)){
-     spatialDT$pixelGroup <- LandR::generatePixelGroups(spatialDT,
-                                maxPixelGroup = 0,
-                                columns = c("ages", "spatial_unit_id", "gcids", "ecozones")
-    )
-  }
-  setkeyv(spatialDT, "pixelIndex")
-
-  spatialDT <- spatialDT[, .(
-    ages, spatial_unit_id, pixelIndex,
-    gcids, ecozones, pixelGroup
+  # Save to simList
+  sim$spatialDT <- spatialDT[, .(
+    pixelIndex, pixelGroup,
+    ages, spatial_unit_id, gcids, ecozones
   )]
-  setkeyv(spatialDT, "pixelIndex")
-  sim$spatialDT <- spatialDT
-  # end create pixel groups-------------
 
 
+  ## Create sim$level3DT, sim$realAges, sim$gcids, and sim$gcids ----
 
-  ## Data.table for simulations (one row per pixel group)---------------------
-  # this table will be the pixel groups that are used in the spinup procedure in
-  # the CBM_core spinup event
-
-  level3DT <- unique(spatialDT[, -("pixelIndex")])
+  level3DT <- unique(sim$spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
+
+  # Create sim$curveID
   sim$curveID <- c("gcids") #, "ecozones" # "id_ecozone"
   ##TODO add to metadata -- use in multiple modules
-  curveID <- sim$curveID
 
+  # Create sim$gcids and sim$level3DT$gcids as a factor
+  curveID <- sim$curveID
   sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
   set(level3DT, NULL, "gcids", sim$gcids)
-
-  ## End data.table for simulations-------------------------------------------
 
   # Create 'realAges' output object and set ages to be >= 3
   ## Temporary fix to CBM_core issue: https://github.com/PredictiveEcology/CBM_core/issues/1
   sim$realAges <- level3DT[, ages]
   level3DT[ages <= 3, ages := 3]
-
   setorderv(level3DT, "pixelGroup")
 
-  ## Creating all the vectors for the spinup --------------------------------
-  ##TODO Do we need all these vectors for the spinup?? Check CBM_core.
-   if(!suppliedElsewhere(sim$delays)){
-     sim$delays <- rep.int(0, dim(level3DT)[1])
-     ##TODO insert message saying that regen delays are set at 0
-  }
-
+  # Join with spinup parameters
   setkeyv(level3DT, "spatial_unit_id")
   spinupParameters <- as.data.table(sim$spinupSQL[, c(1, 7)])
 
@@ -259,11 +287,24 @@ Init <- function(sim) {
   setkeyv(level3DT, "pixelGroup")
   sim$level3DT <- retInt
 
+
+  ## Create sim$delays ----
+
+  if(!suppliedElsewhere(sim$delays)){
+    sim$delays <- rep.int(0, dim(level3DT)[1])
+    ##TODO insert message saying that regen delays are set at 0
+  }
+
+
+  ## Create sim$ecozones and sim$spatialUnits ----
+
   # create sim$ecozones and sim$spatialUnits to subset vol2biomass growth curves
   sim$ecozones <- sim$level3DT$ecozones
   sim$spatialUnits <- sim$level3DT$spatial_unit_id
 
-  # create sim$speciesPixelGroup
+
+  ## Create sim$speciesPixelGroup ----
+
   speciesPixelGroup <- sim$gcMeta[sim$species_tr, on = .(species = name)]
   speciesPixelGroup <- speciesPixelGroup[gcids >= 1,]
   speciesPixelGroup <- speciesPixelGroup[,.(gcids, species_id)]
@@ -271,10 +312,10 @@ Init <- function(sim) {
   speciesPixelGroup <- unique(speciesPixelGroup[,.(pixelGroup, species_id)])
   sim$speciesPixelGroup <- speciesPixelGroup
 
-  ################################################################################
-  ## matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
-  ################################################################################
-  # Matching disturbances to CBM disturbance matrix id---------------------------------
+
+  ## Create sim$mySpuDmids ----
+
+  # Matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
   # make the disturbance look-up table to the disturbance_matrix_id(s)
   # making sim$mySpuDmids
   userDist <- sim$userDist
@@ -284,13 +325,13 @@ Init <- function(sim) {
   # (sim$cbmData@disturbanceMatrixAssociation). User can select any disturbance
   # they want to represent. Some disturbance matrices are based on data but most
   # are expert opinion in the CBM-CFS3 archive.
-  # Disturbance Matrices are specific to spatial_units_ids--------------
+  # Disturbance Matrices are specific to spatial_units_ids
   spu <- unique(sim$spatialDT$spatial_unit_id)
   # what disturbances in those spu(s)?
   # spuDist() function is in CBMutils package
   # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
   # spatial unit with the name of the disturbance in the 3rd colum.
-  listDist <- spuDist(spu, sim$dbPath)
+  listDist <- CBMutils::spuDist(spu, sim$dbPath)
 
   ##TODO make this more generalized so user can customize this to their study
   ##area
@@ -350,7 +391,7 @@ Init <- function(sim) {
   #  }
 
 
- # }
+  ## Create sim$historicDMtype and sim$lastPassDMtype ----
 
   ## TODO: in Canada historic disturbance will always be fire, but the last past may
   ## not, it could be harvest. Make this optional (the user being able to pick
@@ -367,7 +408,8 @@ Init <- function(sim) {
   ## TODO: this is where it could be something else then fire
   sim$lastPassDMtype <- sim$historicDMtype
 
-  # ! ----- STOP EDITING ----- ! #
+
+  ## Return simList ----
 
   return(invisible(sim))
 }
@@ -585,41 +627,8 @@ Init <- function(sim) {
     ## For now, download the shapefile here: http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip and save to spadesCBM/inputs.
 
     sim$ecoRaster <- terra::rasterize(ecozones, sim$masterRaster, field = "ECOZONE")
+
   }
-  # }
-
-
-
-  ## TODO: hard stop here if there are NA values and have user fix them to prevent issues downstream
-  if (any(is.na(values(sim$ecoRaster)))) {
-    stop("ecoRaster cannot contain NA values. Please fix these and rerun.")
-  }
-
-  # Summarize raster values into table
-  dtRasters <- data.table(
-    ages            = terra::values(sim$ageRaster)[,1],
-    spatial_unit_id = terra::values(sim$spuRaster)[,1],
-    gcids           = terra::values(sim$gcIndexRaster)[,1],
-    ecozones        = terra::values(sim$ecoRaster)[,1]
-  )
-
-  # assertion -- if there are both NAs or both have data, then the columns with be the same, so sum is either 0 or 2
-  if (isTRUE(P(sim)$doAssertions)) {
-    bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
-    if (!all(names(table(bbb)) %in% c("0", "4")))
-      stop("should be only 0 or 4s")
-  }
-
-  ## There seems to be a caching problem here, the name adjustments
-  ##
-  sim$allPixDT <- as.data.table(cbind(dtRasters,
-                                      pixelIndex = 1:ncell(sim$gcIndexRaster)))
-
-    ##TODO get rid of this name change but keeping it to track "wrong names" through the scripts.
-    # chgNamesTo <- c("growth_curve_component_id", "ages", "ecozones", "spatial_unit_id",
-    #                 "pixelIndex", "growth_curve_id")
-    # setnames(sim$allPixDT,names(sim$allPixDT),chgNamesTo)
-
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for each year.
   #    But these can be provided by another family of modules in the annual event.
