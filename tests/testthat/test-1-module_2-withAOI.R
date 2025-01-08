@@ -20,7 +20,8 @@ test_that("Module runs with study AOI", {
       modules = "CBM_dataPrep_SK",
       paths   = list(
         projectPath = file.path(testDirs$temp$projects, "2-withAOI"),
-        modulePath  = testDirs$temp$modules
+        modulePath  = testDirs$temp$modules,
+        inputPath   = testDirs$temp$inputs
         #, packagePath = testDirs$temp$libPath
       ),
       require = "testthat",

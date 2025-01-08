@@ -8,16 +8,17 @@
     type = "binary",
     repos = unique(c("predictiveecology.r-universe.dev", getOption("repos"))))
 
-  # Cache Google Drive authorization
-  ## Set authorization email and cache location
-  options(
-    gargle_oauth_email = "", ## Set personal email
-    gargle_oauth_cache = "~/googledrive_oauth_cache"
-  )
+  # Authorize Google Drive
   googledrive::drive_auth()
 
-  # Set location of input data (optional)
-  # options("reproducible.inputPaths" = "~/data")
+
+## OPTIONAL: SET TEST OPTIONS ----
+
+  # Suppress warnings from calls to setupProject, simInit, and spades
+  options("spadesCBM.test.suppressWarnings" = TRUE)
+
+  # Set custom input data location
+  options("reproducible.inputPaths" = NULL)
 
 
 ## RUN ALL TESTS ----
