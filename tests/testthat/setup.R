@@ -23,13 +23,7 @@ withr::defer({
 .test_copyModule(testDirs$Rproj, testDirs$temp$modules)
 
 # Set reproducible options:
-# - Use a shared input data directory
 # - Silence messaging
-if (is.null(getOption("reproducible.inputPaths"))){
-  withr::local_options(
-    list(reproducible.inputPaths = testDirs$temp$inputs),
-    .local_envir = teardownEnv)
-}
 if (testthat::is_testing()) withr::local_options(list(reproducible.verbose = -2), .local_envir = teardownEnv)
 
 # Set Require package options:

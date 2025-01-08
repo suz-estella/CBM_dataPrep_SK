@@ -55,8 +55,12 @@
       message = function(c) tryInvokeRestart("muffleMessage"),
       packageStartupMessage = function(c) tryInvokeRestart("muffleMessage"),
       warning = function(w){
-        if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+        if (getOption("spadesCBM.test.suppressWarnings", default = FALSE)){
           tryInvokeRestart("muffleWarning")
+        }else{
+          if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+            tryInvokeRestart("muffleWarning")
+          }
         }
       },
       ...
