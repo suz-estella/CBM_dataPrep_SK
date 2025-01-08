@@ -711,13 +711,23 @@ Init <- function(sim) {
   }
 
   # 6. Disturbance rasters
-  if (!suppliedElsewhere("disturbanceRasters", sim)) {
+  if (!suppliedElsewhere("disturbanceRasters", sim)){
 
     message("User has not supplied disturbance rasters ('disturbanceRasters'). ",
             "Default for Saskatchewan will be used.")
 
-    sim$disturbanceRasters <- extractURL("disturbanceRasters")
-
+    sim$disturbanceRasters <- sapply(start(sim):end(sim), function(simYear){
+      setNames(
+        preProcess(
+          destinationPath = inputPath(sim),
+          url         = if (simYear == start(sim)) extractURL("disturbanceRasters"),
+          archive     = if (simYear != start(sim)) file.path(inputPath(sim), "disturbance_testArea.zip"),
+          targetFile  = sprintf("disturbance_testArea/SaskDist_%s.grd", simYear),
+          alsoExtract = "similar",
+          fun         = function(x) x
+        )$targetFilePath,
+        simYear)
+    })
   }
 
   # Summarize raster values into table
