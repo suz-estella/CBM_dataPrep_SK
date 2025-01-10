@@ -230,7 +230,7 @@ Init <- function(sim) {
 
   # Summarize input raster values into table
   sim$allPixDT <- data.table(
-    pixelIndex      = 1:ncell(sim$masterRaster),
+    pixelIndex      = 1:terra::ncell(sim$masterRaster),
     ages            = terra::values(sim$ageRaster)[,1],
     spatial_unit_id = terra::values(sim$spuRaster)[,1],
     gcids           = terra::values(sim$gcIndexRaster)[,1],
