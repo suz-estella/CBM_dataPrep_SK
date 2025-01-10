@@ -99,10 +99,14 @@ defineModule(sim, list(
       objectName = "ecoRasterURL", objectClass = "character",
       desc = "URL for ecoRaster"),
     expectsInput(
-    objectName = "disturbanceRasters", objectClass = "character",
-    desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
-    sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
-  )
+      objectName = "disturbanceRasters", objectClass = "character",
+      desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
+      sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
+    ),
+    expectsInput(
+      objectName = "disturbanceRastersURL", objectClass = "character",
+      desc = "URL for disturbanceRasters"
+    )
   ),
 
   outputObjects = bindrows(
@@ -206,6 +210,12 @@ defineModule(sim, list(
       desc = paste(
         "Last pass disturbance type for each pixel group.",
         "Examples: 1 = wildfire; 2 = clearcut.",
+        "Required input to CBM_core.")),
+    createsOutput(
+      objectName = "disturbanceRasters", objectClass = "character",
+      desc = paste(
+        "List of disturbance rasters named by the disturbance year.",
+        "This is either downloaded from the default URL or a user provided URL.",
         "Required input to CBM_core."))
   )
 ))
@@ -753,28 +763,75 @@ Init <- function(sim) {
   }
 
   # 6. Disturbance rasters
-  if (!suppliedElsewhere("disturbanceRasters", sim) ||
-      identical(sim$disturbanceRasters, extractURL("disturbanceRasters"))){
+  if (!suppliedElsewhere("disturbanceRasters", sim)){
 
-    if (!suppliedElsewhere("disturbanceRasters", sim)){
-      message("User has not supplied disturbance rasters ('disturbanceRasters'). ",
-              "Default for Saskatchewan will be used.")
+    if (suppliedElsewhere("disturbanceRastersURL", sim) &&
+        !identical(sim$disturbanceRastersURL, extractURL("disturbanceRasters"))){
+
+      drPaths <- preProcess(
+        destinationPath = inputPath(sim),
+        url = sim$disturbanceRastersURL,
+        fun = NA
+      )$targetFilePath
+
+      # If extracted archive: list all files in directory
+      if (dirname(drPaths) != inputPath(sim)){
+        drPaths <- list.files(dirname(drPaths), full = TRUE)
+      }
+
+      # List files by year
+      drInfo <- data.frame(
+        path = drPaths,
+        name = tools::file_path_sans_ext(basename(drPaths)),
+        ext  = tolower(tools::file_ext(drPaths))
+      )
+      drInfo$year_regexpr <- regexpr("[0-9]{4}", drInfo$name)
+      drInfo$year <- sapply(1:nrow(drInfo), function(i){
+        if (drInfo[i,]$year_regexpr != -1){
+          paste(
+            strsplit(drInfo[i,]$name, "")[[1]][0:3 + drInfo[i,]$year_regexpr],
+            collapse = "")
+        }else NA
+      })
+
+      if (all(is.na(drInfo$year))) stop(
+        "Disturbance raster(s) from 'disturbanceRasterURL' must be named with 4-digit years")
+      drInfo <- drInfo[!is.na(drInfo$year),, drop = FALSE]
+
+      # Choose file type to return for each year
+      drYears <- unique(sort(drInfo$year))
+      sim$disturbanceRasters <- sapply(setNames(drYears, drYears), function(drYear){
+        drInfoYear <- subset(drInfo, year == drYear)
+        if (nrow(drInfoYear) > 1){
+          if ("grd" %in% drInfoYear$ext) return(subset(drInfoYear, ext == "grd")$path)
+          if ("tif" %in% drInfoYear$ext) return(subset(drInfoYear, ext == "grd")$path)
+          drInfoYear$size <- file.size(drInfoYear$path)
+          drInfoYear$path[drInfoYear$size == max(drInfoYear$size)][[1]]
+        }else drInfoYear$path
+      })
+
+    }else{
+
+      if (!suppliedElsewhere("disturbanceRastersURL", sim, where = "user")){
+        message("User has not supplied disturbance rasters ('disturbanceRasters'). ",
+                "Default for Saskatchewan will be used.")
+      }
+
+      simYears <- start(sim):end(sim)
+      if (!all(simYears %in% 1985:2011)) simYears <- 1985:2011
+      sim$disturbanceRasters <- sapply(simYears, function(simYear){
+        setNames(
+          preProcess(
+            destinationPath = inputPath(sim),
+            url         = if (simYear == simYears[[1]]) extractURL("disturbanceRasters"),
+            archive     = if (simYear != simYears[[1]]) file.path(inputPath(sim), "disturbance_testArea.zip"),
+            targetFile  = sprintf("disturbance_testArea/SaskDist_%s.grd", simYear),
+            alsoExtract = "similar",
+            fun         = function(x) x
+          )$targetFilePath,
+          simYear)
+      })
     }
-
-    simYears <- start(sim):end(sim)
-    if (!all(simYears %in% 1985:2011)) simYears <- 1985:2011
-    sim$disturbanceRasters <- sapply(simYears, function(simYear){
-      setNames(
-        preProcess(
-          destinationPath = inputPath(sim),
-          url         = if (simYear == simYears[[1]]) extractURL("disturbanceRasters"),
-          archive     = if (simYear != simYears[[1]]) file.path(inputPath(sim), "disturbance_testArea.zip"),
-          targetFile  = sprintf("disturbance_testArea/SaskDist_%s.grd", simYear),
-          alsoExtract = "similar",
-          fun         = function(x) x
-        )$targetFilePath,
-        simYear)
-    })
   }
 
 
