@@ -527,7 +527,7 @@ Init <- function(sim) {
       )
 
       sim$masterRaster <- terra::classify(
-        sim$masterRaster, cbind = c(0, NA)
+        sim$masterRaster, cbind(0, NA)
       ) |> Cache()
     }
   }
