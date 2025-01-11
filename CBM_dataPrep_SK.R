@@ -230,7 +230,7 @@ Init <- function(sim) {
 
   # Summarize input raster values into table
   sim$allPixDT <- data.table(
-    pixelIndex      = 1:ncell(sim$masterRaster),
+    pixelIndex      = 1:terra::ncell(sim$masterRaster),
     ages            = terra::values(sim$ageRaster)[,1],
     spatial_unit_id = terra::values(sim$spuRaster)[,1],
     gcids           = terra::values(sim$gcIndexRaster)[,1],
@@ -507,9 +507,9 @@ Init <- function(sim) {
   ##study area in SK.
   #NOTE: we are providing the masterRaster in the globalCore1.R. This section is
   #being slipped.
-      if (!suppliedElsewhere("masterRaster", sim)) {
-        if (!suppliedElsewhere("masterRasterURL", sim)) {
-    sim$masterRasterURL <- extractURL("masterRaster")
+  if (!suppliedElsewhere("masterRaster", sim)) {
+    if (!suppliedElsewhere("masterRasterURL", sim)) {
+      sim$masterRasterURL <- extractURL("masterRaster")
 
       ##TODO: why is this
       message(
@@ -524,11 +524,13 @@ Init <- function(sim) {
         url = sim$masterRasterURL,
         fun = "terra::rast",
         destinationPath = inputPath(sim)
-      )|> Cache()
+      )
 
-        }
-
+      sim$masterRaster <- terra::classify(
+        sim$masterRaster, cbind(0, NA)
+      ) |> Cache()
     }
+  }
 
   # 2. Age raster from inventory or from user as a vector
   if(!suppliedElsewhere(sim$ages)){
