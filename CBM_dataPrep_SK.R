@@ -238,13 +238,42 @@ Init <- function(sim) {
 
   ## Create sim$allPixDT ----
 
+  # Check input rasters
+  inRast <- list()
+  for (rName in c("masterRaster", "ageRaster", "spuRaster", "gcIndexRaster", "ecoRaster")){
+
+    inRast[[rName]] <- sim[[rName]]
+
+    if (is.null(inRast[[rName]])) stop(shQuote(rName), " input raster missing")
+
+    if (!inherits(inRast[[rName]], "SpatRaster")){
+      inRast[[rName]] <- tryCatch(
+        terra::rast(inRast[[rName]]),
+        error = function(e) stop(
+          shQuote(rName), " could not be converted to SpatRaster: ", e$message,
+          call. = FALSE))
+    }
+
+    if (rName != "masterRaster" && (
+      terra::ncol(inRast[[rName]]) != terra::ncol(inRast$masterRaster) ||
+      terra::nrow(inRast[[rName]]) != terra::nrow(inRast$masterRaster) ||
+      !all(abs(c(
+        terra::res(inRast[[rName]]) - terra::res(inRast$masterRaster),
+        terra::ext(inRast[[rName]])$xmin - terra::ext(inRast$masterRaster)$xmin,
+        terra::ext(inRast[[rName]])$xmax - terra::ext(inRast$masterRaster)$xmax,
+        terra::ext(inRast[[rName]])$ymin - terra::ext(inRast$masterRaster)$ymin,
+        terra::ext(inRast[[rName]])$ymax - terra::ext(inRast$masterRaster)$ymax
+      )) < 0.01)
+    )) stop(shQuote(rName), " does not align with ", shQuote("masterRaster"))
+  }
+
   # Summarize input raster values into table
   sim$allPixDT <- data.table(
-    pixelIndex      = 1:ncell(sim$masterRaster),
-    ages            = terra::values(sim$ageRaster)[,1],
-    spatial_unit_id = terra::values(sim$spuRaster)[,1],
-    gcids           = terra::values(sim$gcIndexRaster)[,1],
-    ecozones        = terra::values(sim$ecoRaster)[,1]
+    pixelIndex      = 1:terra::ncell(inRast$masterRaster),
+    ages            = terra::values(inRast$ageRaster)[,1],
+    spatial_unit_id = terra::values(inRast$spuRaster)[,1],
+    gcids           = terra::values(inRast$gcIndexRaster)[,1],
+    ecozones        = terra::values(inRast$ecoRaster)[,1]
   )
   setkeyv(sim$allPixDT, "pixelIndex")
 
@@ -329,6 +358,14 @@ Init <- function(sim) {
   # make the disturbance look-up table to the disturbance_matrix_id(s)
   # making sim$mySpuDmids
   userDist <- sim$userDist
+
+  if (!inherits(userDist, "data.table")){
+    userDist <- tryCatch(
+      data.table::as.data.table(userDist),
+      error = function(e) stop(
+        "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
+  }
+
   # Most cases will only require fire (wildfire) and a clearcut. There are 426
   # disturbance matrices identified in the archive of CBM
   # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
@@ -430,246 +467,188 @@ Init <- function(sim) {
 
   # 1. Growth and yield
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
-  if (suppliedElsewhere("userGcM3", sim) | suppliedElsewhere("userGcM3URL", sim)){
+  if (!suppliedElsewhere("userGcM3", sim)){
 
-    if (suppliedElsewhere("userGcM3", sim)){
-
-      if (!inherits(sim$userGcM3, "data.table")){
-
-        sim$userGcM3 <- tryCatch(
-          data.table::as.data.table(sim$userGcM3),
-          error = function(e) stop(
-            "'userGcM3' could not be converted to data.table: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("userGcM3URL", sim)){
+    if (suppliedElsewhere("userGcM3URL", sim) &
+        !identical(sim$userGcM3URL, extractURL("userGcM3"))){
 
       sim$userGcM3 <- prepInputs(
         destinationPath = inputPath(sim),
         url = sim$userGcM3URL,
         fun = data.table::fread
       )
+
+    }else{
+
+      if (!suppliedElsewhere("userGcM3URL", sim, where = "user")) message(
+        "User has not supplied growth curves ('userGcM3' or 'userGcM3URL'). ",
+        "Default for Saskatchewan will be used.")
+
+      sim$userGcM3 <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("userGcM3"),
+        targetFile = "userGcM3.csv",
+        fun        = data.table::fread
+      )
+      names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
     }
-
-    reqCols <- c("gcids", "Age", "MerchVolume")
-    if (!all(reqCols %in% names(sim$userGcM3))) stop(
-      "'userGcM3' must have the following columns: ",
-      paste(shQuote(reqCols), collapse = ", "))
-
-  }else{
-
-    message("User has not supplied growth curves ('userGcM3' or 'userGcM3URL'). ",
-            "Default for Saskatchewan will be used.")
-
-    sim$userGcM3 <- prepInputs(
-      destinationPath = inputPath(sim),
-      url        = extractURL("userGcM3"),
-      targetFile = "userGcM3.csv",
-      fun        = data.table::fread
-    )
-    names(sim$userGcM3) <- c("gcids", "Age", "MerchVolume")
   }
 
   # 2. Disturbance information
-  if (suppliedElsewhere("userDist", sim) | suppliedElsewhere("userDistURL", sim)){
+  if (!suppliedElsewhere("userDist", sim)){
 
-    if (suppliedElsewhere("userDist", sim)){
-
-      if (!inherits(sim$userDist, "data.table")){
-
-        sim$userDist <- tryCatch(
-          data.table::as.data.table(sim$userDist),
-          error = function(e) stop(
-            "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("userDistURL", sim)){
+    if (suppliedElsewhere("userDistURL", sim) &
+        !identical(sim$userDistURL, extractURL("userDist"))){
 
       sim$userDist <- prepInputs(
         destinationPath = inputPath(sim),
         url = sim$userDistURL,
         fun = data.table::fread
       )
+
+    }else{
+
+      if (!suppliedElsewhere("userDistURL", sim, where = "user")) message(
+        "User has not supplied disturbance information ('userDist' or 'userDistURL'). ",
+        "Default for Saskatchewan will be used.")
+
+      sim$userDist <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("userDist"),
+        targetFile = "userDist.csv",
+        fun        = data.table::fread
+      )
     }
-
-  }else{
-
-    message("User has not supplied disturbance information ('userDist' or 'userDistURL'). ",
-            "Default for Saskatchewan will be used.")
-
-    sim$userDist <- prepInputs(
-      destinationPath = inputPath(sim),
-      url        = extractURL("userDist"),
-      targetFile = "userDist.csv",
-      fun        = data.table::fread
-    )
   }
 
   # 3. CBM admin
-  if (suppliedElsewhere("cbmAdmin", sim) | suppliedElsewhere("cbmAdminURL", sim)){
+  if (!suppliedElsewhere("cbmAdmin", sim)){
 
-    if (suppliedElsewhere("cbmAdmin", sim)){
-
-      if (!inherits(sim$cbmAdmin, "data.table")){
-
-        sim$cbmAdmin <- tryCatch(
-          data.table::as.data.table(sim$cbmAdmin),
-          error = function(e) stop(
-            "'cbmAdmin' could not be converted to data.table: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("cbmAdminURL", sim)){
+    if (suppliedElsewhere("cbmAdminURL", sim) &
+        !identical(sim$cbmAdminURL, extractURL("cbmAdmin"))){
 
       sim$cbmAdmin <- prepInputs(
         destinationPath = inputPath(sim),
         url = sim$cbmAdminURL,
         fun = data.table::fread
       )
+
+    }else{
+
+      if (!suppliedElsewhere("cbmAdminURL", sim, where = "user")) message(
+        "User has not supplied CBM admin ('cbmAdmin' or 'cbmAdminURL'). ",
+        "Default for Canada will be used.")
+
+      sim$cbmAdmin <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("cbmAdmin"),
+        targetFile = "cbmAdmin.csv",
+        fun        = data.table::fread
+      )
     }
-
-  }else{
-
-    message("User has not supplied disturbance information ('cbmAdmin' or 'cbmAdminURL'). ",
-            "Default for Canada will be used.")
-
-    sim$cbmAdmin <- prepInputs(
-      destinationPath = inputPath(sim),
-      url        = extractURL("cbmAdmin"),
-      targetFile = "cbmAdmin.csv",
-      fun        = data.table::fread
-    )
   }
 
 
   ## Spatial inputs ----
 
   # 1. Master raster
-  if (suppliedElsewhere("masterRaster", sim) | suppliedElsewhere("masterRasterURL", sim)){
+  if (!suppliedElsewhere("masterRaster", sim)){
 
-    if (suppliedElsewhere("masterRaster", sim)){
-
-      if (!inherits(sim$masterRaster, "SpatRaster")){
-
-        sim$masterRaster <- tryCatch(
-          terra::rast(sim$masterRaster),
-          error = function(e) stop(
-            "'masterRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("masterRasterURL", sim)){
+    if (suppliedElsewhere("masterRasterURL", sim) &
+        !identical(sim$masterRasterURL, extractURL("masterRaster"))){
 
       sim$masterRaster <- prepInputs(
         destinationPath = inputPath(sim),
         url = sim$masterRasterURL,
         fun = terra::rast
       ) |> Cache()
+
+    }else{
+
+      if (!suppliedElsewhere("masterRasterURL", sim, where = "user")) message(
+        "User has not supplied a master raster ('masterRaster' or 'masterRasterURL'). ",
+        "Default for Saskatchewan will be used.")
+
+      masterRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("masterRaster"),
+        targetFile = "ldSp_TestArea.tif",
+        fun        = terra::rast
+      )
+
+      sim$masterRaster <- terra::classify(
+        masterRaster, cbind(0, NA)
+      ) |> Cache()
     }
-
-  }else{
-
-    message("User has not supplied a master raster ('masterRaster' or 'masterRasterURL'). ",
-            "Default for Saskatchewan will be used.")
-
-    sim$masterRaster <- prepInputs(
-      destinationPath = inputPath(sim),
-      url        = extractURL("masterRaster"),
-      targetFile = "ldSp_TestArea.tif",
-      fun        = terra::rast
-    ) |> Cache()
   }
 
   # 2. Age raster
-  if (suppliedElsewhere("ageRaster", sim) | suppliedElsewhere("ageRasterURL", sim)){
+  if (!suppliedElsewhere("ageRaster", sim)){
 
-    if (suppliedElsewhere("ageRaster", sim)){
-
-      if (!inherits(sim$ageRaster, "SpatRaster")){
-
-        sim$ageRaster <- tryCatch(
-          terra::rast(sim$ageRaster),
-          error = function(e) stop(
-            "'ageRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("ageRasterURL", sim)){
+    if (suppliedElsewhere("ageRasterURL", sim) &
+        !identical(sim$ageRasterURL, extractURL("ageRaster"))){
 
       sim$ageRaster <- prepInputs(
         destinationPath = inputPath(sim),
-        url        = sim$ageRasterURL,
+        url    = sim$ageRasterURL,
+        fun    = terra::rast,
+        to     = sim$masterRaster,
+        method = "near"
+      ) |> Cache()
+
+    }else{
+
+      if (!suppliedElsewhere("ageRasterURL", sim, where = "user")) message(
+        "User has not supplied an age raster ('ageRaster' or 'ageRasterURL'). ",
+        "Default for Saskatchewan will be used.")
+
+      sim$ageRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("ageRaster"),
         targetFile = "age_TestArea.tif",
         fun        = terra::rast,
         to         = sim$masterRaster,
         method     = "near"
       ) |> Cache()
     }
-
-  }else{
-
-    message("User has not supplied an age raster ('ageRaster' or 'ageRasterURL'). ",
-            "Default for Saskatchewan will be used.")
-
-    sim$ageRaster <- prepInputs(
-      destinationPath = inputPath(sim),
-      url    = extractURL("ageRaster"),
-      fun    = terra::rast,
-      to     = sim$masterRaster,
-      method = "near"
-    ) |> Cache()
   }
 
   # 3. Growth curves
-  if (suppliedElsewhere("gcIndexRaster", sim) | suppliedElsewhere("gcIndexRasterURL", sim)){
+  if (!suppliedElsewhere("gcIndexRaster", sim)){
 
-    if (suppliedElsewhere("gcIndexRaster", sim)){
-
-      if (!inherits(sim$gcIndexRaster, "SpatRaster")){
-
-        sim$gcIndexRaster <- tryCatch(
-          terra::rast(sim$gcIndexRaster),
-          error = function(e) stop(
-            "'gcIndexRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("gcIndexRasterURL", sim)){
+    if (suppliedElsewhere("gcIndexRasterURL", sim) &
+        !identical(sim$gcIndexRasterURL, extractURL("gcIndexRaster"))){
 
       sim$gcIndexRaster <- prepInputs(
         destinationPath = inputPath(sim),
-        url        = sim$gcIndexRasterURL,
+        url    = sim$gcIndexRasterURL,
+        fun    = terra::rast,
+        to     = sim$masterRaster,
+        method = "near"
+      ) |> Cache()
+
+    }else{
+
+      if (!suppliedElsewhere("gcIndexRasterURL", sim, where = "user")) message(
+        "User has not supplied a growth curve raster ('gcIndexRaster' or 'gcIndexRasterURL'). ",
+        "Default for Saskatchewan will be used.")
+
+      sim$gcIndexRaster <- prepInputs(
+        destinationPath = inputPath(sim),
+        url        = extractURL("gcIndexRaster"),
         targetFile = "gcIndex.tif",
         fun        = terra::rast,
         to         = sim$masterRaster,
         method     = "near"
       ) |> Cache()
     }
-
-  }else{
-
-    message("User has not supplied a growth curve raster ('gcIndexRaster' or 'gcIndexRasterURL'). ",
-            "Default for Saskatchewan will be used.")
-
-    sim$gcIndexRaster <- prepInputs(
-      destinationPath = inputPath(sim),
-      url    = extractURL("gcIndexRaster"),
-      fun    = terra::rast,
-      to     = sim$masterRaster,
-      method = "near"
-    ) |> Cache()
   }
 
   # 4. Spatial units raster
-  if (suppliedElsewhere("spuRaster", sim) | suppliedElsewhere("spuRasterURL", sim)){
+  if (!suppliedElsewhere("spuRaster", sim)){
 
-    if (suppliedElsewhere("spuRaster", sim)){
-
-      if (!inherits(sim$spuRaster, "SpatRaster")){
-
-        sim$spuRaster <- tryCatch(
-          terra::rast(sim$spuRaster),
-          error = function(e) stop(
-            "'spuRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("spuRasterURL", sim)){
+    if (suppliedElsewhere("spuRasterURL", sim) &
+        !identical(sim$spuRasterURL, extractURL("spuRaster"))){
 
       sim$spuRaster <- prepInputs(
         destinationPath = inputPath(sim),
@@ -678,45 +657,37 @@ Init <- function(sim) {
         to     = sim$masterRaster,
         method = "near"
       ) |> Cache()
+
+    }else{
+
+      if (!suppliedElsewhere("spuRasterURL", sim, where = "user")) message(
+        "User has not supplied a spatial units raster ('spuRaster' or 'spuRasterURL'). ",
+        "Default for Canada will be used.")
+
+      spuSF <- prepInputs(
+        destinationPath = inputPath(sim),
+        url         = extractURL("spuRaster"),
+        filename1   = "spUnit_Locator.zip",
+        targetFile  = "spUnit_Locator.shp",
+        alsoExtract = "similar",
+        fun         = sf::st_read(targetFile, quiet = TRUE),
+        projectTo   = sim$masterRaster,
+        cropTo      = sim$masterRaster
+      ) |> Cache()
+
+      sim$spuRaster <- terra::rasterize(
+        terra::vect(spuSF),
+        sim$masterRaster,
+        field = "spu_id"
+      ) |> Cache()
     }
-
-  }else{
-
-    message("User has not supplied a spatial units raster ('spuRaster' or 'spuRasterURL'). ",
-            "Default for Canada will be used.")
-
-    spuSF <- prepInputs(
-      destinationPath = inputPath(sim),
-      url         = extractURL("spuRaster"),
-      filename1   = "spUnit_Locator.zip",
-      targetFile  = "spUnit_Locator.shp",
-      alsoExtract = "similar",
-      fun         = sf::st_read(targetFile, quiet = TRUE),
-      projectTo   = sim$masterRaster,
-      cropTo      = sim$masterRaster
-    ) |> Cache()
-
-    sim$spuRaster <- terra::rasterize(
-      terra::vect(spuSF),
-      sim$masterRaster,
-      field = "spu_id"
-    ) |> Cache()
   }
 
   # 5. Ecozones raster
-  if (suppliedElsewhere("ecoRaster", sim) | suppliedElsewhere("ecoRasterURL", sim)){
+  if (!suppliedElsewhere("ecoRaster", sim)){
 
-    if (suppliedElsewhere("ecoRaster", sim)){
-
-      if (!inherits(sim$ecoRaster, "SpatRaster")){
-
-        sim$ecoRaster <- tryCatch(
-          terra::rast(sim$ecoRaster),
-          error = function(e) stop(
-            "'ecoRaster' could not be converted to SpatRaster: ", e$message, call. = FALSE))
-      }
-
-    }else if (suppliedElsewhere("ecoRasterURL", sim)){
+    if (suppliedElsewhere("ecoRasterURL", sim) &
+        !identical(sim$ecoRasterURL, extractURL("ecoRaster"))){
 
       sim$ecoRaster <- prepInputs(
         destinationPath = inputPath(sim),
@@ -725,47 +696,48 @@ Init <- function(sim) {
         to     = sim$masterRaster,
         method = "near"
       ) |> Cache()
+
+    }else{
+
+      if (!suppliedElsewhere("ecoRasterURL", sim, where = "user")) message(
+        "User has not supplied an ecozones raster ('ecoRaster' or 'ecoRasterURL'). ",
+        "Default for Canada will be used.")
+
+      ## 2024-12-04 NOTE:
+      ## Multiple users had issues downloading and extracting this file via prepInputs.
+      ## Downloading the ZIP directly and saving it in the inputs directory works OK.
+      ecoSF <- tryCatch(
+
+        prepInputs(
+          destinationPath = inputPath(sim),
+          url         = extractURL("ecoRaster"),
+          filename1   = "ecozone_shp.zip",
+          targetFile  = "ecozones.shp",
+          alsoExtract = "similar",
+          fun         = sf::st_read(targetFile, quiet = TRUE),
+          projectTo   = sim$masterRaster,
+          cropTo      = sim$masterRaster
+        ) |> Cache(),
+
+        error = function(e) stop(
+          "Canada ecozones Shapefile failed be downloaded and extracted:\n", e$message, "\n\n",
+          "If this error persists, download the ZIP file directly and save it to the inputs directory.",
+          "\nDownload URL: ", extractURL("ecoRaster"),
+          "\nInputs directory: ", normalizePath(inputPath(sim), winslash = "/"),
+          call. = F))
+
+      sim$ecoRaster <- terra::rasterize(
+        terra::vect(ecoSF),
+        sim$masterRaster,
+        field = "ECOZONE"
+      ) |> Cache()
     }
-
-  }else{
-
-    message("User has not supplied an ecozones raster ('ecoRaster' or 'ecoRasterURL'). ",
-            "Default for Canada will be used.")
-
-    ## 2024-12-04 NOTE:
-    ## Multiple users had issues downloading and extracting this file via prepInputs.
-    ## Downloading the ZIP directly and saving it in the inputs directory works OK.
-    ecoSF <- tryCatch(
-
-      prepInputs(
-        destinationPath = inputPath(sim),
-        url         = extractURL("ecoRaster"),
-        filename1   = "ecozone_shp.zip",
-        targetFile  = "ecozones.shp",
-        alsoExtract = "similar",
-        fun         = sf::st_read(targetFile, quiet = TRUE),
-        projectTo   = sim$masterRaster,
-        cropTo      = sim$masterRaster
-      ) |> Cache(),
-
-      error = function(e) stop(
-        "Canada ecozones Shapefile failed be downloaded and extracted:\n", e$message, "\n\n",
-        "If this error persists, download the ZIP file directly and save it to the inputs directory.",
-        "\nDownload URL: ", extractURL("ecoRaster"),
-        "\nInputs directory: ", normalizePath(inputPath(sim), winslash = "/"),
-        call. = F))
-
-    sim$ecoRaster <- terra::rasterize(
-      terra::vect(ecoSF),
-      sim$masterRaster,
-      field = "ECOZONE"
-    ) |> Cache()
   }
 
   # 6. Disturbance rasters
   if (!suppliedElsewhere("disturbanceRasters", sim)){
 
-    if (suppliedElsewhere("disturbanceRastersURL", sim) &&
+    if (suppliedElsewhere("disturbanceRastersURL", sim) &
         !identical(sim$disturbanceRastersURL, extractURL("disturbanceRasters"))){
 
       drPaths <- preProcess(
@@ -812,10 +784,9 @@ Init <- function(sim) {
 
     }else{
 
-      if (!suppliedElsewhere("disturbanceRastersURL", sim, where = "user")){
-        message("User has not supplied disturbance rasters ('disturbanceRasters'). ",
-                "Default for Saskatchewan will be used.")
-      }
+      if (!suppliedElsewhere("disturbanceRastersURL", sim, where = "user")) message(
+        "User has not supplied disturbance rasters ('disturbanceRasters'). ",
+        "Default for Saskatchewan will be used.")
 
       simYears <- start(sim):end(sim)
       if (!all(simYears %in% 1985:2011)) simYears <- 1985:2011
@@ -827,7 +798,7 @@ Init <- function(sim) {
             archive     = if (simYear != simYears[[1]]) file.path(inputPath(sim), "disturbance_testArea.zip"),
             targetFile  = sprintf("disturbance_testArea/SaskDist_%s.grd", simYear),
             alsoExtract = "similar",
-            fun         = function(x) x
+            fun         = NA
           )$targetFilePath,
           simYear)
       })
