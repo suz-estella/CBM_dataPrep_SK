@@ -156,18 +156,6 @@ test_that("Module runs with study AOI", {
   expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
 
 
-  ## Check output 'delays' ----
-
-  expect_true(!is.null(simTest$delays))
-  expect_true(class(simTest$delays) %in% c("integer", "numeric"))
-
-  # Check that there is 1 for every pixel group
-  expect_equal(length(simTest$delays), nrow(simTest$level3DT))
-
-  # By default: no delays
-  expect_true(all(simTest$delays == 0))
-
-
   ## Check output 'mySpuDmids' ----
 
   expect_true(!is.null(simTest$mySpuDmids))

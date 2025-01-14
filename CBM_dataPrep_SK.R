@@ -175,11 +175,6 @@ defineModule(sim, list(
         "Spatial unit IDs extracted from input 'spuRaster' for each pixel group.",
         "Required input to CBM_vol2biomass")),
     createsOutput(
-      objectName = "delays", objectClass = "numeric",
-      desc = paste(
-        "Regeneration delay post disturbance for each pixel group.",
-        "Required input to CBM_core.")),
-    createsOutput(
       objectName = "realAges", objectClass = "numeric",
       desc = paste(
         "Stand ages extracted from input 'ageRaster' for each pixel group.",
@@ -325,14 +320,6 @@ Init <- function(sim) {
   setkeyv(retInt, "pixelGroup")
   setkeyv(level3DT, "pixelGroup")
   sim$level3DT <- retInt
-
-
-  ## Create sim$delays ----
-
-  if(!suppliedElsewhere(sim$delays)){
-    sim$delays <- rep.int(0, dim(level3DT)[1])
-    ##TODO insert message saying that regen delays are set at 0
-  }
 
 
   ## Create sim$ecozones and sim$spatialUnits ----
