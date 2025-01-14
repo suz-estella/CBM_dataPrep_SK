@@ -236,11 +236,19 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
 
 Init <- function(sim) {
 
-  ## Create sim$allPixDT ----
+  ## Create sim$allPixDT and sim$spatialDT ----
+
+  # Set which pixel group columns are assigned from input rasters
+  pgCols <- c(
+    "ages"            = "ageRaster",
+    "spatial_unit_id" = "spuRaster",
+    "gcids"           = "gcIndexRaster",
+    "ecozones"        = "ecoRaster"
+  )
 
   # Check input rasters
   inRast <- list()
-  for (rName in c("masterRaster", "ageRaster", "spuRaster", "gcIndexRaster", "ecoRaster")){
+  for (rName in c("masterRaster", pgCols)){
 
     inRast[[rName]] <- sim[[rName]]
 
@@ -254,7 +262,7 @@ Init <- function(sim) {
           call. = FALSE))
     }
 
-    if (rName != "masterRaster" && (
+    if (rName %in% pgCols && (
       terra::ncol(inRast[[rName]]) != terra::ncol(inRast$masterRaster) ||
       terra::nrow(inRast[[rName]]) != terra::nrow(inRast$masterRaster) ||
       !all(abs(c(
@@ -267,31 +275,35 @@ Init <- function(sim) {
     )) stop(shQuote(rName), " does not align with ", shQuote("masterRaster"))
   }
 
-  # Summarize input raster values into table
-  sim$allPixDT <- data.table(
-    pixelIndex      = 1:terra::ncell(inRast$masterRaster),
-    ages            = terra::values(inRast$ageRaster)[,1],
-    spatial_unit_id = terra::values(inRast$spuRaster)[,1],
-    gcids           = terra::values(inRast$gcIndexRaster)[,1],
-    ecozones        = terra::values(inRast$ecoRaster)[,1]
+  # Create sim$allPixDT: Summarize input raster values into table
+  sim$allPixDT <- data.table::data.table(
+    pixelIndex = 1:terra::ncell(inRast$masterRaster)
   )
+  for (i in 1:length(pgCols)){
+    sim$allPixDT[[names(pgCols)[[i]]]] <- terra::values(inRast[[pgCols[[i]]]])[,1]
+  }
   setkeyv(sim$allPixDT, "pixelIndex")
 
+  # Create sim$spatialDT: Summarize input raster values where masterRaster is not NA
+  spatialDT <- sim$allPixDT[!is.na(terra::values(sim$masterRaster)[,1]),]
 
-  ## Create sim$spatialDT ----
-
-  spatialDT <- sim$allPixDT[!is.na(ages) & !is.na(gcids),]
+  spatialDT_isNA <- is.na(spatialDT)
+  if (any(spatialDT_isNA)){
+    for (i in 1:length(pgCols)){
+      if (any(spatialDT_isNA[[names(pgCols)[[i]]]])) warning(
+        "Pixels have had to be excluded from the simulation where ",
+        shQuote(pgCols[[i]]), " contains NAs")
+    }
+    spatialDT <- spatialDT[!apply(spatialDT_isNA, 1, any),]
+  }
 
   # Create pixel groups: groups of pixels with the same attributes
   spatialDT$pixelGroup <- LandR::generatePixelGroups(
-    spatialDT, maxPixelGroup = 0, columns = c("ages", "spatial_unit_id", "gcids", "ecozones")
+    spatialDT, maxPixelGroup = 0, columns = names(pgCols)
   )
 
-  # Save to simList
-  sim$spatialDT <- spatialDT[, .(
-    pixelIndex, pixelGroup,
-    ages, spatial_unit_id, gcids, ecozones
-  )]
+  # Keep only essential columns
+  sim$spatialDT <- spatialDT[, c("pixelIndex", "pixelGroup", names(pgCols)), with = FALSE]
 
 
   ## Create sim$level3DT, sim$realAges, sim$gcids, and sim$gcids ----
