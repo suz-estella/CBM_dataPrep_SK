@@ -43,18 +43,24 @@
   }
 }
 
-# Helper function: suppress messages; muffle common warnings
+# Helper function: suppress output and messages; muffle common warnings
 .SpaDESwithCallingHandlers <- function(expr, ...){
 
   if (testthat::is_testing()){
+
+    withr::local_output_sink(tempfile())
 
     withCallingHandlers(
       expr,
       message = function(c) tryInvokeRestart("muffleMessage"),
       packageStartupMessage = function(c) tryInvokeRestart("muffleMessage"),
       warning = function(w){
-        if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+        if (getOption("spadesCBM.test.suppressWarnings", default = FALSE)){
           tryInvokeRestart("muffleWarning")
+        }else{
+          if (grepl("^package ['\u2018]{1}[a-zA-Z0-9.]+['\u2019]{1} was built under R version [0-9.]+$", w$message)){
+            tryInvokeRestart("muffleWarning")
+          }
         }
       },
       ...
@@ -70,11 +76,12 @@
   if (objectName == "dbPath"){
 
     # From CBM_defaults
-    reproducible::prepInputs(
-      url = "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db",
-      targetFile = "cbm_defaults_v1.2.8340.362.db",
-      destinationPath = testDirs$temp$inputs,
-      alsoExtract = NA, fun = NA)
+    dlURL <- "https://raw.githubusercontent.com/cat-cfs/libcbm_py/main/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.8340.362.db"
+    destPath <- file.path(testDirs$temp$inputs, basename(dlURL))
+    if (!file.exists(destPath)){
+      download.file(url = dlURL, destfile = destPath, mode = "wb", quiet = TRUE)
+    }
+    destPath
 
   }else if (objectName == "spinupSQL"){
 
@@ -89,12 +96,12 @@
   }else if (objectName == "gcMeta"){
 
     # From CBM_vol2biomass
-    reproducible::prepInputs(
-      url = "https://drive.google.com/file/d/189SFlySTt0Zs6k57-PzQMuQ29LmycDmJ/view?usp=sharing",
-      targetFile = "gcMetaEg.csv",
-      destinationPath = testDirs$temp$inputs,
-      fun = fread,
-      purge = 7)
+    dlURL <- "https://drive.google.com/file/d/189SFlySTt0Zs6k57-PzQMuQ29LmycDmJ/view?usp=sharing"
+    destPath <- file.path(testDirs$temp$inputs, "gcMetaEg.csv")
+    if (!file.exists(destPath)){
+      withr::with_options(c(googledrive_quiet = TRUE), googledrive::drive_download(dlURL, path = destPath))
+    }
+    data.table::fread(destPath)
   }
 }
 
