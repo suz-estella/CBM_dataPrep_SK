@@ -351,7 +351,7 @@ Init <- function(sim) {
   sim$speciesPixelGroup <- speciesPixelGroup
 
 
-  ## Create sim$mySpuDmids ----
+  ## Create sim$mySpuDmids, sim$historicDMtype, and sim$lastPassDMtype ----
 
   # Read user disturbances
   userDist <- sim$userDist
@@ -412,21 +412,14 @@ Init <- function(sim) {
       ), collapse = "; ")
     }), collapse = "\n- "))
 
+  # Set sim$historicDMtype to be wildfire
+  sim$historicDMtype <- data.table::merge.data.table(
+    sim$level3DT,
+    subset(listDist, tolower(name) == "wildfire"),
+    by = "spatial_unit_id"
+  )$disturbance_type_id
 
-  ## Create sim$historicDMtype and sim$lastPassDMtype ----
-
-  ## TODO: in Canada historic disturbance will always be fire, but the last past may
-  ## not, it could be harvest. Make this optional (the user being able to pick
-  ## the historical and last pass disturbance). If defaults are picked (fire for
-  ## both), write the user a message saying these are the defaults.
-
-  ##to remove...
-  # mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
-  # myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
-  # setkey(myFires, spatial_unit_id)
-  # setkey(sim$level3DT, spatial_unit_id)
-  ###DANGER HARDCODED
-  sim$historicDMtype <- rep(sim$mySpuDmids[1,]$disturbance_type_id, dim(sim$level3DT)[1])
+  # Set sim$lastPassDMtype to be wildfire
   ## TODO: this is where it could be something else then fire
   sim$lastPassDMtype <- sim$historicDMtype
 
