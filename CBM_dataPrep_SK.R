@@ -353,9 +353,7 @@ Init <- function(sim) {
 
   ## Create sim$mySpuDmids ----
 
-  # Matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
-  # make the disturbance look-up table to the disturbance_matrix_id(s)
-  # making sim$mySpuDmids
+  # Read user disturbances
   userDist <- sim$userDist
 
   if (!inherits(userDist, "data.table")){
@@ -365,76 +363,54 @@ Init <- function(sim) {
         "'userDist' could not be converted to data.table: ", e$message, call. = FALSE))
   }
 
-  # Most cases will only require fire (wildfire) and a clearcut. There are 426
-  # disturbance matrices identified in the archive of CBM
-  # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
-  # (sim$cbmData@disturbanceMatrixAssociation). User can select any disturbance
-  # they want to represent. Some disturbance matrices are based on data but most
-  # are expert opinion in the CBM-CFS3 archive.
-  # Disturbance Matrices are specific to spatial_units_ids
-  spu <- unique(sim$spatialDT$spatial_unit_id)
-  # what disturbances in those spu(s)?
-  # spuDist() function is in CBMutils package
-  # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
-  # spatial unit with the name of the disturbance in the 3rd colum.
-  listDist <- CBMutils::spuDist(spu, sim$dbPath)
+  reqCols <- c("distName", "rasterID", "wholeStand")
+  if (!all(reqCols %in% names(userDist))) stop(
+    "'userDist' must have the following columns: ",
+    paste(shQuote(reqCols), collapse = ", "))
+  userDist <- userDist[, .(distName, rasterID, wholeStand)]
 
-  ##TODO make this more generalized so user can customize this to their study
-  ##area
-  ##TODO this is a section that needs to change as we figure out if
-  ##disturbance_type_id needs to be used here instead of disturbance_matrix_id
+  # List disturbances possible within in each spatial unit
+  spuIDs <- unique(sim$spatialDT$spatial_unit_id)
+  listDist <- CBMutils::spuDist(spuIDs, sim$dbPath)
 
-  # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
-##CELINE HERE: trying to make mySpyDmids from userDist
-  #if(!suppliedElsewhere(sim$mySpuDmids)){
-    ##repeating each user identified disturbance name for each spu, adding the
-    ##user defined link between the disturbance type and the provided raster (or
-    ##spatial layer), adding the user specified wholeStand flag.
-    distName <- c(rep(userDist$distName, length(spu)))
-    rasterID <- c(rep(userDist$rasterID, length(spu)))
-    wholeStand <- c(rep(userDist$wholeStand, length(spu)))
-    spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
+  # Match user disturbances with CBM-CFS3 disturbance matrices
+  userDistSpu <- do.call(rbind, lapply(spuIDs, function(spuID){
+    cbind(spatial_unit_id = spuID, userDist)
+  }))
 
-    mySpuDmids <- data.table(distName, rasterID, spatial_unit_id, wholeStand)
+  ldMatch <- cbind(listDist, matchName = tolower(listDist$name))
 
-    #dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
-    dmType <- data.frame(disturbance_type_id = integer(),
-                         spatial_unit_id = integer(),
-                         disturbance_matrix_id = integer(),
-                         name = character(),
-                         description = character())
+  ## Allow for some special cases
+  ldMatchSpecial <- rbind(
+    subset(data.table::copy(listDist),
+           grepl("^Clearcut harvesting without salvage$", name, ignore.case = TRUE))[
+             , matchName := "clearcut"],
+    subset(data.table::copy(listDist),
+           grepl("^Generic [0-9]{1,3}% mortality$", name, ignore.case = TRUE))[
+             , matchName := gsub("Generic ", "", name)]
+  )
 
- #   for (i in 1:length(mySpuDmids$distName)) {
+  ldMatch <- rbind(
+    ldMatch,
+    ldMatchSpecial[!ldMatch[, c("spatial_unit_id", "matchName"), with = F],
+                   on = c("spatial_unit_id", "matchName")]
+  )
 
-      ## TODO: present the user with options that live in listDist for the
-      ## specific spu or in sim$cbmData@disturbanceMatrix
-      ## Start with code below. For SK, Celine selected:
-      ##   disturbance_type_id spatial_unit_id disturbance_matrix_id                                name
-      ##1                   1              28                   371                            Wildfire
-      ##2                 204              28                   160 Clearcut harvesting without salvage
-      ##3                   7              28                    26 Deforestation
-      ##4                 168              28                    91 Generic 20% mortality Generic 20% mortality
-      ### DANGER HARD CODED FIXES:
-      distMatid <- c(371, 160, 26, 91)
-      match1 <- listDist[disturbance_matrix_id %in% distMatid,]
-      match2 <- match1[c(4,3,1,2,2),]
-      sim$mySpuDmids <- cbind(mySpuDmids, match2[,-2])
-      #
-      # if (mySpuDmids$distName[i] == "clearcut") {
-      #   ##there is most likely more than one clearcut
-      #   getCut <- listDist[grep("clear", listDist$name, ignore.case = TRUE), ]
-      #   ##TODO here is where a message to the user with the name and description
-      #   ##columns so they can choose which fits better to there management
-      #   ##interventions.
-      #
-      #   dmType[i, ] <- getCut[4,]
-      # } else {
-      #   getDist <- listDist[grep(sim$mySpuDmids$distName[i], listDist$name, ignore.case = TRUE), ]
-      #   ## Next line is if there are more then one spu
-      #   getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
-      #   dmType[i, ] <- getDist[1, ]
-      # }
-  #  }
+  sim$mySpuDmids <- data.table::merge.data.table(
+    cbind(userDistSpu, matchName = tolower(userDist$distName)),
+    ldMatch, by = c("spatial_unit_id", "matchName"),
+    all = FALSE, sort = FALSE)[, matchName := NULL]
+
+  noMatch <- userDistSpu[!sim$mySpuDmids[, names(userDistSpu), with = F], on = names(userDistSpu)]
+  if (nrow(noMatch) > 0) stop(
+    "Could not find CBM-CFS3 disturbance matrix match for disturbance(s):\n- ",
+    paste(sapply(split(noMatch, 1:nrow(noMatch)), function(nmr){
+      colChar <- sapply(nmr, is.character)
+      paste(c(
+        sapply(which(!colChar), function(i) paste(names(nmr)[[i]], "=", nmr[[i]])),
+        sapply(which( colChar), function(i) paste(names(nmr)[[i]], "=", shQuote(nmr[[i]])))
+      ), collapse = "; ")
+    }), collapse = "\n- "))
 
 
   ## Create sim$historicDMtype and sim$lastPassDMtype ----
