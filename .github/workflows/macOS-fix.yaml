@@ -9,10 +9,10 @@ on:
       - main
       - development
 
-name: testthat-module
+name: macOS-fix
 
 jobs:
-  testthat-module:
+  macOS-fix:
     if: "!contains(github.event.commits[0].message, '[skip-ci]')"
     runs-on: ${{ matrix.config.os }}
 
@@ -57,7 +57,8 @@ jobs:
       - name: Install R package 'BH' (macOS)
         if: runner.os == 'macOS'
         run: |
-          pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", "RcppParallel", "Rdpack")
+          pkgList <- c("BH", "Rcpp")
+          #pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", "RcppParallel", "Rdpack")
           install.packages("Require")
           Require::Require(pkgList)
         shell: Rscript {0}
