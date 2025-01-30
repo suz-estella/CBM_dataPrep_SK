@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 2025-01-30: systemfonts R package failed to install due to these missing
       - name: Install fontconfig (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -52,10 +53,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
 
+      # 2025-01-30: BH R package failed install via SpaDES.project::setupProject
       - name: Install R package 'BH' (macOS)
         if: runner.os == 'macOS'
         run: |
           install.packages("BH")
+          options("Require.cloneFrom" = Sys.getenv("R_LIBS_USER"))
         shell: Rscript {0}
 
       - name: Install testthat R package

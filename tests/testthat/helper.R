@@ -128,8 +128,10 @@ SpaDEStestLocalOptions <- function(
     spades.moduleDocument         = spades.moduleDocument,
     SpaDES.project.updateRprofile = SpaDES.project.updateRprofile
   )
+  localOptions <- localOptions[!sapply(localOptions, is.null)]
+  localOptions <- localOptions[!names(localOptions) %in% names(options())]
 
-  withr::local_options(localOptions[!sapply(localOptions, is.null)], .local_envir = teardownEnv)
+  withr::local_options(localOptions, .local_envir = teardownEnv)
 }
 
 
