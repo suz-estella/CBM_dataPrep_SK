@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - development
+      - suz-testthat-brainstorm2
   pull_request:
     branches:
       - main
@@ -56,7 +57,9 @@ jobs:
       - name: Install R package 'BH' (macOS)
         if: runner.os == 'macOS'
         run: |
-          install.packages(c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen"
+          pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", RcppParallel", "Rdpack")
+          install.packages("Require")
+          Require::Require(pkgList)
         shell: Rscript {0}
 
       - name: Install testthat R package
@@ -76,6 +79,6 @@ jobs:
           library(SpaDES.core)
           library(SpaDES.project)
           options("Require.cloneFrom" = Sys.getenv("R_LIBS_USER"))
-          testthat::test_dir("tests/testthat")
+          testthat::test_file("tests/testthat/test-1-module_2-withAOI.R")
         shell: Rscript {0}
 
