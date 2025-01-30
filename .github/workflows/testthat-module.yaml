@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - development
+      - suz-testthat-brainstorm2
   pull_request:
     branches:
       - main
@@ -39,11 +40,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt -y install libfontconfig1-dev
-          sudo apt-get install libharfbuzz-dev libfribidi-dev
-          sudo apt-get install libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+          sudo apt-get install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
         shell: bash
-
-      - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
 
@@ -53,6 +51,12 @@ jobs:
           Ncpus: 2
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
+
+      - name: Install R package 'BH' (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          install.packages("BH")
+        shell: Rscript {0}
 
       - name: Install testthat R package
         run: install.packages("testthat")

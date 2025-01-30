@@ -40,8 +40,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt -y install libfontconfig1-dev
-          sudo apt-get install libharfbuzz-dev libfribidi-dev
-          sudo apt-get install libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
+          sudo apt-get install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
         shell: bash
 
       - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
@@ -53,9 +52,14 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
 
-      - name: Install CBMutils
+      - name: Install R package 'BH' (macOS)
+        if: runner.os == 'macOS'
         run: |
           install.packages("BH")
+        shell: Rscript {0}
+
+      - name: Install CBMutils
+        run: |
           install.packages("devtools")
           devtools::install_github("PredictiveEcology/CBMutils@development", dependencies = TRUE)
         shell: Rscript {0}
