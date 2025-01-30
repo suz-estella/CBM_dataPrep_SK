@@ -40,6 +40,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt -y install libfontconfig1-dev
+          sudo apt-get install libharfbuzz-dev libfribidi-dev
+          sudo apt-get install libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
         shell: bash
 
       - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
