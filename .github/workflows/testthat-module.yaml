@@ -58,7 +58,6 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           install.packages("BH")
-          options("Require.cloneFrom" = Sys.getenv("R_LIBS_USER"))
         shell: Rscript {0}
 
       - name: Install testthat R package
@@ -75,9 +74,9 @@ jobs:
 
       - name: Run testthat::test_dir
         run: |
-          library(testthat)
           library(SpaDES.core)
           library(SpaDES.project)
+          options("Require.cloneFrom" = Sys.getenv("R_LIBS_USER"))
           testthat::test_dir("tests/testthat")
         shell: Rscript {0}
 
