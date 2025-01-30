@@ -57,7 +57,7 @@ jobs:
       - name: Install R package 'BH' (macOS)
         if: runner.os == 'macOS'
         run: |
-          pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", RcppParallel", "Rdpack")
+          pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", "RcppParallel", "Rdpack")
           install.packages("Require")
           Require::Require(pkgList)
         shell: Rscript {0}
