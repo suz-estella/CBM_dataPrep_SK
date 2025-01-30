@@ -53,7 +53,7 @@ jobs:
         run: install.packages("googledrive")
         shell: Rscript {0}
 
-      - name: Run testthat::test_local
-        run: testthat::test_local()
+      - name: Run testthat::test_dir
+        run: testthat::test_dir("tests/testthat")
         shell: Rscript {0}
 
