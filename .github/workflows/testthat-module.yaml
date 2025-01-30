@@ -3,15 +3,16 @@ on:
     branches:
       - main
       - development
+      - suz-testthat-brainstorm2
   pull_request:
     branches:
       - main
       - development
 
-name: R-CMD-check
+name: testthat-module
 
 jobs:
-  R-CMD-check:
+  testthat-module:
     if: "!contains(github.event.commits[0].message, '[skip-ci]')"
     runs-on: ${{ matrix.config.os }}
 
