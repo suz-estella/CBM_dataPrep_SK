@@ -55,6 +55,7 @@ jobs:
 
       - name: Install CBMutils
         run: |
+          install.packages("BH")
           install.packages("devtools")
           devtools::install_github("PredictiveEcology/CBMutils@development", dependencies = TRUE)
         shell: Rscript {0}
