@@ -45,7 +45,7 @@ jobs:
         run: install.packages("testthat")
         shell: Rscript {0}
 
-      - name: Install SpaDES module R package dependencies
+      - name: Install SpaDES R packages
         run: install.packages(c("SpaDES.core", "SpaDES.project"))
         shell: Rscript {0}
 
@@ -54,6 +54,10 @@ jobs:
         shell: Rscript {0}
 
       - name: Run testthat::test_dir
-        run: testthat::test_dir("tests/testthat")
+        run: |
+          library(testthat)
+          library(SpaDES.core)
+          library(SpaDES.project)
+          testthat::test_dir("tests/testthat")
         shell: Rscript {0}
 
