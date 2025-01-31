@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - development
+      - suz-testthat-brainstorm2
   pull_request:
     branches:
       - main
@@ -53,10 +54,9 @@ jobs:
           use-public-rspm: false
 
       # 2025-01-30: R packages failed install via SpaDES.project::setupProject
-      - name: Install R package 'BH' (macOS)
+      - name: Pre-install R packages for macOS
         if: runner.os == 'macOS'
-        run: |
-          install.packages(c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen"
+        run: install.packages(c("BH", "Rcpp"))
         shell: Rscript {0}
 
       - name: Install testthat R package
