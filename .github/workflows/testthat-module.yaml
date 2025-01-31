@@ -22,10 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel'}
+          - {os: windows-latest, r: 'devel'}
           - {os: ubuntu-latest,  r: 'release'}
+          - {os: ubuntu-latest,  r: 'devel'}
           #- {os: macOS-latest,   r: 'release'}
 
     env:
@@ -36,7 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 2025-01-30: systemfonts R package failed to install due to these missing
+      # 2025-01-30: on ubuntu-latest (devel)
+      # systemfonts R package failed to install due to these missing
       - name: Install fontconfig (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -61,7 +62,7 @@ jobs:
 
           install.packages("googledrive")
 
-          ## 2025-01-30: for macOS:
+          ## 2025-01-30: on macOS:
           ## R packages failed install via SpaDES.project::setupProject
           ## This didn't help so macOS is off the runner list for now
           # reqdPkgs = c(
