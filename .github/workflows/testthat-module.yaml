@@ -59,6 +59,8 @@ jobs:
           install.packages("testthat")
           install.packages(c("SpaDES.core", "SpaDES.project"))
 
+          install.packages("googledrive")
+
           ## 2025-01-30: for macOS:
           ## R packages failed install via SpaDES.project::setupProject
           ##  This did'ndidn't work't help so macOS is off the runner list for now
@@ -70,11 +72,10 @@ jobs:
           #   "googledrive"
           # )
           # Require::Require(reqdPkgs)
-          # options("Require.cloneFrom" = head(.libPaths()), 1)
 
           library(SpaDES.core)
           library(SpaDES.project)
-
+          options("Require.cloneFrom" = head(.libPaths()), 1)
           testthat::test_dir("tests/testthat")
 
         shell: Rscript {0}
