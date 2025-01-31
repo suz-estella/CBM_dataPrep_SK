@@ -53,15 +53,15 @@ jobs:
       - name: Pre-install R packages for macOS
         if: runner.os == 'macOS'
         run: |
-          pkgList <- list(
+          reqdPkgs = list(
             "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
             "reproducible (>=2.1.2)" ,
             "PredictiveEcology/CBMutils@development",
             "PredictiveEcology/LandR@development"
           )
-          install.packages(pkgList)
-          #install.packages("Require")
-          #Require::Require(pkgList)
+          install.packages("Require")
+          stop(Sys.getenv("R_LIBS_USER"))
+          Require::Require(reqdPkgs, .libPaths = Sys.getenv("R_LIBS_USER"))
         shell: Rscript {0}
 
       - name: Install testthat R package
