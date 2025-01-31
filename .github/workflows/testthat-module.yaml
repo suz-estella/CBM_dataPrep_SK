@@ -63,7 +63,7 @@ jobs:
 
           ## 2025-01-30: for macOS:
           ## R packages failed install via SpaDES.project::setupProject
-          ##  This did'ndidn't work't help so macOS is off the runner list for now
+          ## This didn't help so macOS is off the runner list for now
           # reqdPkgs = c(
           #   "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
           #   "reproducible" ,
