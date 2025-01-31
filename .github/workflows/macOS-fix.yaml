@@ -59,9 +59,8 @@ jobs:
             "PredictiveEcology/CBMutils@development",
             "PredictiveEcology/LandR@development"
           )
-          install.packages(pkgList)
-          #install.packages("Require")
-          #Require::Require(pkgList)
+          install.packages("Require")
+          Require::Require(pkgList)
         shell: Rscript {0}
 
       - name: Install testthat R package
