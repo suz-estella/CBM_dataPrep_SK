@@ -53,7 +53,7 @@ jobs:
       - name: Pre-install R packages for macOS
         if: runner.os == 'macOS'
         run: |
-          pkgList <- c("BH", "Rcpp")
+          pkgList <- c("BH", "Rcpp", "DBI")
           install.packages("Require")
           Require::Require(pkgList)
         shell: Rscript {0}
@@ -70,7 +70,7 @@ jobs:
         run: install.packages("googledrive")
         shell: Rscript {0}
 
-      - name: Run testthat::test_dir
+      - name: Run testthat
         run: |
           library(SpaDES.core)
           library(SpaDES.project)
