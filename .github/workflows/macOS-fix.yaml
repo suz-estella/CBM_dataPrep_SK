@@ -53,10 +53,15 @@ jobs:
       - name: Pre-install R packages for macOS
         if: runner.os == 'macOS'
         run: |
-          #pkgList <- c("BH", "Rcpp", "DBI")
-          pkgList <- c("BH", "DBI", "DEoptimR", "Deriv", "Formula", "MatrixModels", "MuMIn", "RApiSerialize", "RColorBrewer", "RCurl", "RSQLite", "Rcpp", "RcppArmadillo", "RcppEigen", "RcppParallel", "Rdpack")
-          install.packages("Require")
-          Require::Require(pkgList)
+          pkgList <- list(
+            "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
+            "reproducible (>=2.1.2)" ,
+            "PredictiveEcology/CBMutils@development",
+            "PredictiveEcology/LandR@development"
+          )
+          install.packages(pkgList)
+          #install.packages("Require")
+          #Require::Require(pkgList)
         shell: Rscript {0}
 
       - name: Install testthat R package
