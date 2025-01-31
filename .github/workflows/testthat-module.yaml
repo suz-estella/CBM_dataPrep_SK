@@ -55,7 +55,16 @@ jobs:
       # 2025-01-30: R packages failed install via SpaDES.project::setupProject
       - name: Pre-install R packages for macOS
         if: runner.os == 'macOS'
-        run: install.packages(c("BH", "Rcpp"))
+        run: |
+          # install.packages(c("BH", "Rcpp")) # didn't work
+          reqdPkgs = c(
+            "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
+            "reproducible" ,
+            "PredictiveEcology/CBMutils@development",
+            "PredictiveEcology/LandR@development"
+          )
+          install.packages("Require")
+          Require::Require(reqdPkgs)
         shell: Rscript {0}
 
       - name: Install testthat R package
@@ -70,11 +79,11 @@ jobs:
         run: install.packages("googledrive")
         shell: Rscript {0}
 
-      - name: Run testthat::test_dir
+      - name: Run testthat
         run: |
           library(SpaDES.core)
           library(SpaDES.project)
-          options("Require.cloneFrom" = Sys.getenv("R_LIBS_USER"))
+          options("Require.cloneFrom" = head(.libPaths()), 1)
           testthat::test_dir("tests/testthat")
         shell: Rscript {0}
 
