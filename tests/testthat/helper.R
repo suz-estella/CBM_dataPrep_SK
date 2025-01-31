@@ -69,14 +69,18 @@ SpaDEStestSetUpDirectories <- function(
   }, envir = teardownEnv, priority = "last")
 
   # Restore library paths after testing
-  withr::local_libpaths(.libPaths(), .local_envir = teardownEnv)
+  ## This likely should be where setupProject() is called (inside test_that),
+  ## but the packages that are left attached after running SpaDES stops it
+  libPathsInit <- .libPaths()
+  withr::local_libpaths(libPathsInit, .local_envir = teardownEnv)
+
+  # Install "testthat" with dependencies into the R packages directory
+  Require::Require("testthat", libPaths = testDirs$temp$libPath,
+                   dependencies = TRUE, verbose = -2)
 
   # Sink output and messages to file
   if (localOutputSink)  withr::local_output_sink(file.path(testDirs$temp$root, "local_output_sink.txt"))
   if (localMessageSink) withr::local_message_sink(file.path(testDirs$temp$root, "local_message_sink.txt"))
-
-  # Install "testthat" with dependencies into the R packages directory
-  Require::Install("testthat", libPaths = testDirs$temp$libPath, verbose = -2)
 
   # Return test directories
   testDirs
