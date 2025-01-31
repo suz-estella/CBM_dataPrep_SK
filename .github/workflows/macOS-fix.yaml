@@ -51,8 +51,8 @@ jobs:
 
       # 2025-01-30: R packages failed install via SpaDES.project::setupProject
       - name: Pre-install R packages for macOS
-        if: runner.os == 'macOSskip'
-        run: install.packages(c("BH", "Rcpp"))
+        if: runner.os == 'macOS'
+        run: install.packages("BH")
         shell: Rscript {0}
 
       - name: Install testthat R package
