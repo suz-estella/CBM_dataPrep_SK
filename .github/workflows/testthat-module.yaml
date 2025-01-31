@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - development
+      - suz-testthat-brainstorm2
   pull_request:
     branches:
       - main
@@ -25,7 +26,7 @@ jobs:
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,  r: 'devel'}
           - {os: ubuntu-latest,  r: 'release'}
-          - {os: macOS-latest,   r: 'release'}
+          #- {os: macOS-latest,   r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -56,20 +57,25 @@ jobs:
         run: |
 
           install.packages("testthat")
-          install.packages(c("SpaDES.core", "SpaDES.project", "Require"))
+          install.packages(c("SpaDES.core", "SpaDES.project"))
 
-          reqdPkgs = c(
-            "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
-            "reproducible" ,
-            "PredictiveEcology/CBMutils@development",
-            "PredictiveEcology/LandR@development",
-            "googledrive"
-          )
-          Require::Require(reqdPkgs)
+          ## 2025-01-30: for macOS:
+          ## R packages failed install via SpaDES.project::setupProject
+          ##  This did'ndidn't work't help so macOS is off the runner list for now
+          # reqdPkgs = c(
+          #   "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
+          #   "reproducible" ,
+          #   "PredictiveEcology/CBMutils@development",
+          #   "PredictiveEcology/LandR@development",
+          #   "googledrive"
+          # )
+          # Require::Require(reqdPkgs)
+          # options("Require.cloneFrom" = head(.libPaths()), 1)
 
           library(SpaDES.core)
           library(SpaDES.project)
-          options("Require.cloneFrom" = head(.libPaths()), 1)
+
           testthat::test_dir("tests/testthat")
+
         shell: Rscript {0}
 
