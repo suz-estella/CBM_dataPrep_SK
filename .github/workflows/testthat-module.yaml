@@ -67,6 +67,7 @@ jobs:
 
       - name: Install testthat
         run: install.packages("testthat")
+        shell: Rscript {0}
 
       - name: Run testthat
         run: |
