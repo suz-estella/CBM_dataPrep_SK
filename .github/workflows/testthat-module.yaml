@@ -61,6 +61,12 @@ jobs:
 
       - uses: PredictiveEcology/actions/install-SpaDES@v0.2
 
+      - name: Install SpaDES.project
+        run: |
+          cat("::group::Installing SpaDES.project from GitHub \n")
+          Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
+          cat("::endgroup::\n")
+
       - name: Run testthat
         run: |
 
