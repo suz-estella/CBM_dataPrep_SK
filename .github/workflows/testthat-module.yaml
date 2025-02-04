@@ -62,11 +62,11 @@ jobs:
       - uses: PredictiveEcology/actions/install-SpaDES@v0.2
 
       - name: Install SpaDES.project
-        run: |
-          cat("::group::Installing SpaDES.project from GitHub \n")
-          Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
-          cat("::endgroup::\n")
+        run: Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
         shell: Rscript {0}
+
+      - name: Install testthat
+        run: install.packages("testthat")
 
       - name: Run testthat
         run: |
@@ -75,23 +75,7 @@ jobs:
           install.packages("googledrive")
           googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTH"))
 
-          install.packages("testthat")
-          # install.packages(c("SpaDES.core", "SpaDES.project"))
-
-          ## 2025-01-30: on macOS:
-          ## R packages failed install via SpaDES.project::setupProject
-          ## This didn't help so macOS is off the runner list for now
-          # reqdPkgs = c(
-          #   "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
-          #   "reproducible" ,
-          #   "PredictiveEcology/CBMutils@development",
-          #   "PredictiveEcology/LandR@development",
-          #   "googledrive"
-          # )
-          # Require::Require(reqdPkgs)
-
-          library(SpaDES.core)
-          library(SpaDES.project)
+          # Run tests
           testthat::test_dir("tests/testthat")
 
         shell: Rscript {0}
