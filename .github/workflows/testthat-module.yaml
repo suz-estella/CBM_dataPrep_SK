@@ -42,7 +42,7 @@ jobs:
       # 2025-01-30: on ubuntu-latest (devel)
       # systemfonts R package failed to install due to these missing
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux' && matrix.config.r == 'devel'
         run: |
           sudo apt -y install libfontconfig1-dev
           sudo apt-get install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
