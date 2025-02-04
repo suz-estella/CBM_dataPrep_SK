@@ -4,6 +4,7 @@ on:
       - main
       - development
       - suz-testthat
+      - suz-testthat-temp
   pull_request:
     branches:
       - main
@@ -36,16 +37,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
+
       # 2025-01-30: on ubuntu-latest (devel)
       # systemfonts R package failed to install due to these missing
-      - name: Install fontconfig (Linux)
-        if: runner.os == 'Linux'
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt -y install libfontconfig1-dev
           sudo apt-get install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
         shell: bash
-
-      - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
 
       - uses: r-lib/actions/setup-r@v2
         with:
