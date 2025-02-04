@@ -55,6 +55,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
 
+      - uses: PredictiveEcology/actions/install-Require@v0.2
+        with:
+          GitTag: 'development'
+
+      - uses: PredictiveEcology/actions/install-SpaDES@v0.2
+
       - name: Run testthat
         run: |
 
@@ -63,7 +69,7 @@ jobs:
           googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTH"))
 
           install.packages("testthat")
-          install.packages(c("SpaDES.core", "SpaDES.project"))
+          # install.packages(c("SpaDES.core", "SpaDES.project"))
 
           ## 2025-01-30: on macOS:
           ## R packages failed install via SpaDES.project::setupProject
