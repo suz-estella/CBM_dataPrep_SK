@@ -66,6 +66,7 @@ jobs:
           cat("::group::Installing SpaDES.project from GitHub \n")
           Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
           cat("::endgroup::\n")
+        shell: Rscript {0}
 
       - name: Run testthat
         run: |
