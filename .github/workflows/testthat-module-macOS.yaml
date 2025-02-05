@@ -4,6 +4,7 @@ on:
       - main
       - development
       - suz-testthat
+      - suz-testthat-temp
   pull_request:
     branches:
       - main
@@ -22,11 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'}
-          - {os: windows-latest, r: 'devel'}
-          - {os: ubuntu-latest,  r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel'}
-          #- {os: macOS-latest,   r: 'release'}
+          - {os: macOS-latest,   r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +36,7 @@ jobs:
       - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
 
       # 2025-01-30: systemfonts R package failed to install due to these missing
-      - name: Install extra Linux dependencies
+      - name: Install extra dependencies
         if: runner.os == 'Linux' && matrix.config.r == 'devel'
         run: |
           sudo apt -y install libfontconfig1-dev
