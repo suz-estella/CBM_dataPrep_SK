@@ -64,6 +64,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "..")[[1]]
+          cat(paste(pkgs, collapse = ", "), "\n")
           Require::Require(pkgs[[1]])
           #Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
         shell: Rscript {0}
