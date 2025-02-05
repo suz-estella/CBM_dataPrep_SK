@@ -4,7 +4,6 @@ on:
       - main
       - development
       - suz-testthat
-      - suz-testthat-temp
   pull_request:
     branches:
       - main
