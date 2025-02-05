@@ -75,7 +75,7 @@ jobs:
           googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTH"))
 
           # Run tests
-          testthat::test_dir("tests/testthat")
+          testthat::test_dir("tests/testthat", stop_on_failure = TRUE)
 
         shell: Rscript {0}
 
