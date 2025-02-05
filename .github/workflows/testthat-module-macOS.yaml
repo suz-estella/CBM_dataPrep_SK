@@ -57,7 +57,7 @@ jobs:
       - uses: PredictiveEcology/actions/install-SpaDES@v0.2
 
       - name: Install SpaDES.project
-        run: install.package("SpaDES.project")
+        run: install.packages("SpaDES.project")
         shell: Rscript {0}
 
       - name: Install module package and other dependencies
@@ -80,7 +80,7 @@ jobs:
           googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTH"))
 
           # Run tests
-          testthat::test_dir("tests/testthat")
+          testthat::test_dir("tests/testthat", stop_on_failure = TRUE)
 
         shell: Rscript {0}
 
