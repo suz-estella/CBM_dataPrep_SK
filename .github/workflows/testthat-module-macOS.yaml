@@ -63,11 +63,10 @@ jobs:
       - name: Install module package and other dependencies
         if: runner.os == 'macOS'
         run: |
-          #pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "..")[[1]]
-          pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "...")[[1]]
+          pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = ".")[[1]]
           cat(normalizePath("."), "\n")
           cat(normalizePath(".."), "\n")
-          cat(normalizePath("..."), "\n")
+          #cat(normalizePath("..."), "\n")
           cat(paste(pkgs, collapse = ", "), "\n")
           Require::Require(pkgs[[1]])
           #Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
