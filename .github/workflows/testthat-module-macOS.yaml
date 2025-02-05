@@ -60,6 +60,14 @@ jobs:
         run: Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
         shell: Rscript {0}
 
+      - name: Install module package and other dependencies
+        if: runner.os == 'macOS'
+        run: |
+          pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "..")[[1]]
+          Require::Require(pkgs[[1]])
+          Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
+        shell: Rscript {0}
+
       - name: Install testthat
         run: install.packages("testthat")
         shell: Rscript {0}
