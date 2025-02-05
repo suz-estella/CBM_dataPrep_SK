@@ -57,7 +57,7 @@ jobs:
       - uses: PredictiveEcology/actions/install-SpaDES@v0.2
 
       - name: Install SpaDES.project
-        run: Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
+        run: install.package("SpaDES.project")
         shell: Rscript {0}
 
       - name: Install module package and other dependencies
@@ -65,7 +65,7 @@ jobs:
         run: |
           pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "..")[[1]]
           Require::Require(pkgs[[1]])
-          Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
+          #Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
         shell: Rscript {0}
 
       - name: Install testthat
