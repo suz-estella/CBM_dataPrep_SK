@@ -15,6 +15,8 @@ test_that("Module runs with defaults", {
 
     SpaDES.project::setupProject(
 
+      times = list(start = 1985, end = 2011),
+
       modules = "CBM_dataPrep_SK",
       paths   = list(
         projectPath = projectPath,
@@ -143,12 +145,30 @@ test_that("Module runs with defaults", {
   expect_equal(simTest$realAges[simTest$realAges >= 3], simTest$level3DT$ages[simTest$realAges >= 3])
   expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
 
-  ## Check output 'mySpuDmids' ----
 
-  expect_true(!is.null(simTest$mySpuDmids))
-  expect_true(inherits(simTest$mySpuDmids, "data.table"))
+  ## Check output 'disturbanceEvents' -----
 
-  expect_equal(nrow(simTest$mySpuDmids), 20)
+  expect_true(!is.null(simTest$disturbanceEvents))
+  expect_true(inherits(simTest$disturbanceEvents, "data.table"))
+
+  for (colName in c("pixelIndex", "year", "eventID")){
+    expect_true(colName %in% names(simTest$disturbanceEvents))
+    expect_true(is.integer(simTest$disturbanceEvents[[colName]]))
+    expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
+  }
+
+  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$allPixDT$pixelIndex))
+  expect_true(all(simTest$disturbanceEvents$year       %in% 1985:2011))
+
+  expect_equal(nrow(simTest$disturbanceEvents), 295569)
+
+
+  ## Check output 'disturbanceMeta' ----
+
+  expect_true(!is.null(simTest$disturbanceMeta))
+  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
+
+  expect_equal(nrow(simTest$disturbanceMeta), 20)
 
 
   ## Check output 'historicDMtype' ----
@@ -173,16 +193,6 @@ test_that("Module runs with defaults", {
 
   # Check that there are no NAs
   expect_true(all(!is.na(simTest$lastPassDMtype)))
-
-
-  ## Check output 'disturbanceRasters' -----
-
-  expect_true(!is.null(simTest$disturbanceRasters))
-  expect_true(inherits(simTest$disturbanceRasters, "character"))
-
-  # Check at least one file was downloaded
-  expect_true(length(simTest$disturbanceRasters) >= 1)
-  expect_true(all(file.exists(simTest$disturbanceRasters)))
 
 })
 

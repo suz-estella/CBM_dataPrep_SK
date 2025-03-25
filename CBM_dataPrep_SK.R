@@ -15,7 +15,7 @@ defineModule(sim, list(
   reqdPkgs = list(
     "data.table", "sf", "terra",
     "reproducible (>=2.1.2)" ,
-    "PredictiveEcology/CBMutils@development (>=0.0.7.9017)",
+    "PredictiveEcology/CBMutils@development (>=2.0.1)",
     "PredictiveEcology/LandR@development"
   ),
   parameters = rbind(
@@ -87,26 +87,33 @@ defineModule(sim, list(
         "Spatial data source from which ecozone IDs extracted.",
         "An output of CBM_defaults.")),
     expectsInput(
-      objectName = "disturbanceRasters", objectClass = "character",
+      objectName = "disturbanceRasters", objectClass = "list",
       sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt",
       desc = paste(
-        "Required input to CBM_core.",
-        "If not specified elsewhere, the default source URL is provided.",
-        "The default is the Wulder and White disturbance rasters for SK covering 1984-2011."
+        "One or more sets of rasters containing locations of disturbance events for each year.",
+        "If the list is named with disturbance event IDs, all non-NA cells will be considered events.",
+        "If the list is length 1 and unnamed, the disturbance rasters must have pixel values matching event IDs.",
+        "Each set of disturbance rasters must be a list or SpatRaster stack named with 4 digit years",
+        "such that a single raster layer can be accessed for each disturbance year",
+        "(e.g.  `disturbanceRasters[[\"1\"]][[\"2025\"]]`).",
+        "The default rasters are the Wulder and White disturbance rasters for SK covering 1984-2011."
       )),
     expectsInput(
       objectName = "disturbanceRastersURL", objectClass = "character",
-      desc = "URL for disturbanceRasters"),
+      desc = paste(
+        "One or more URL for disturbanceRasters.",
+        "If the vector is named, it must be named with the disturbance event IDs the raster includes events for.",
+        "If the vector is not named, the raster values must be event IDs.")),
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
       sourceURL = "https://drive.google.com/file/d/1n4fXwUkX5GPyWJgr0QQx65roAIaxmcWJ",
       desc = paste(
         "Table defines the values present in the user provided disturbance rasters.",
         "The user will be prompted to match these with CBM-CFS3 disturbances",
-        "to create the 'mySpuDmids' table input to CBM_core.",
+        "to create the 'disturbanceMeta' table input to CBM_core.",
         "The default is a table defining the values in the default 'disturbanceRasters'."),
       columns = c(
-        rasterID   = "ID links to pixel values in the disturbance rasters",
+        eventID    = "Event type ID",
         wholeStand = "Specifies if the whole stand is disturbed (1 = TRUE; 0 = FALSE)",
         name       = "Disturbance name (e.g. 'Wildfire')"
       )),
@@ -181,19 +188,20 @@ defineModule(sim, list(
         "Stand ages extracted from input 'ageRaster' for each pixel group.",
         "Required input to CBM_core.")),
     createsOutput(
-      objectName = "disturbanceRasters", objectClass = "character",
+      objectName = "disturbanceEvents", objectClass = "data.table",
       desc = paste(
-        "List of disturbance rasters named by the disturbance year.",
-        "This is either downloaded from the default URL or a user provided URL.",
+        "Table with disturbance events for each simulation year.",
+        "The inputs 'disturbanceRasters' are aligned with the 'masterRaster'",
+        "and the events are summarized into this table.",
         "Required input to CBM_core.")),
     createsOutput(
-      objectName = "mySpuDmids", objectClass = "data.frame",
+      objectName = "disturbanceMeta", objectClass = "data.frame",
       desc = paste(
-        "Table summarizing CBM-CFS3 disturbances possible within the spatial units.",
-        "This links CBM-CFS3 disturbances with the values in the disturbance rasters.",
+        "Table defining the disturbance event types.",
+        "This is created by matching the input 'userDist' table with CBM-CFS3 disturbance types.",
         "Required input to CBM_core."),
       columns = c(
-        rasterID              = "Raster ID from 'userDist'",
+        eventID               = "Event type ID from 'userDist'",
         wholeStand            = "wholeStand flag from 'userDist'",
         spatial_unit_id       = "Spatial unit ID",
         disturbance_type_id   = "Disturbance type ID",
@@ -219,9 +227,40 @@ defineModule(sim, list(
 doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
+
     init = {
+
       sim <- Init(sim)
+
+      # Read annual disturbances
+      sim <- scheduleEvent(sim, start(sim), "CBM_dataPrep_SK", "readDisturbanceEvents")
     },
+
+    readDisturbanceEvents = {
+
+      if (!is.null(sim$disturbanceRasters)){
+
+        # Align disturbances with masterRaster and summarize in table
+        newEvents <-  mapply(
+          CBMutils::dataPrep_disturbanceRasters,
+          disturbanceRasters = sim$disturbanceRasters,
+          eventID  = lapply(1:length(sim$disturbanceRasters), function(i) names(sim$disturbanceRasters)[i]),
+          MoreArgs = list(
+            templateRast = sim$masterRaster,
+            year         = time(sim)
+          ),
+          SIMPLIFY = FALSE) |> Cache()
+
+        sim$disturbanceEvents <- do.call(rbind, c(
+          if (!is.null(sim$disturbanceEvents)) list(sim$disturbanceEvents),
+          newEvents
+        ))
+      }
+
+      # Schedule for next year
+      sim <- scheduleEvent(sim, time(sim) + 1, "CBM_dataPrep_SK", "readDisturbanceEvents")
+    },
+
     warning(noEventWarning(sim))
   )
   return(invisible(sim))
@@ -370,7 +409,7 @@ Init <- function(sim) {
   sim$speciesPixelGroup <- speciesPixelGroup
 
 
-  ## Create sim$mySpuDmids, sim$historicDMtype, and sim$lastPassDMtype ----
+  ## Create sim$disturbanceMeta, sim$historicDMtype, and sim$lastPassDMtype ----
 
   # List disturbances possible within in each spatial unit
   spuIDs <- sort(unique(sim$level3DT$spatial_unit_id))
@@ -382,10 +421,10 @@ Init <- function(sim) {
 
   # Check if userDist already has all the required IDs
   if (all(c("spatial_unit_id", "disturbance_type_id", "disturbance_matrix_id") %in% names(sim$userDist))){
-    sim$mySpuDmids <- sim$userDist
+    sim$disturbanceMeta <- sim$userDist
   }
 
-  if (!suppliedElsewhere("mySpuDmids", sim)){
+  if (!suppliedElsewhere("disturbanceMeta", sim)){
 
     # Read user disturbances
     userDist <- sim$userDist
@@ -409,7 +448,7 @@ Init <- function(sim) {
     if (askUser) message(
       "Prompting user to match input disturbances with CBM-CFS3 disturbances:")
 
-    sim$mySpuDmids <- do.call(rbind, lapply(1:nrow(userDistSpu), function(i){
+    sim$disturbanceMeta <- do.call(rbind, lapply(1:nrow(userDistSpu), function(i){
 
       userDistMatch <- CBMutils::spuDistMatch(
         userDistSpu[i,], listDist = listDist,
@@ -441,9 +480,9 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
 
-  ## Data table inputs ----
+  ## Read inputs ----
 
-  # 1. Growth and yield
+  # Growth and yield table
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis.
   if (!suppliedElsewhere("userGcM3", sim)){
 
@@ -472,21 +511,7 @@ Init <- function(sim) {
     }
   }
 
-  # 2. Disturbance information
-  if (!suppliedElsewhere("userDist", sim) & !suppliedElsewhere("mySpuDmids", sim)  &
-      suppliedElsewhere("userDistURL", sim)){
-
-    sim$userDist <- prepInputs(
-      destinationPath = inputPath(sim),
-      url = sim$userDistURL,
-      fun = data.table::fread
-    )
-  }
-
-
-  ## Spatial inputs ----
-
-  # 1. Master raster
+  # Master raster
   if (!suppliedElsewhere("masterRaster", sim)){
 
     if (suppliedElsewhere("masterRasterURL", sim) &
@@ -516,7 +541,7 @@ Init <- function(sim) {
     }
   }
 
-  # 2. Age raster
+  # Stand ages
   if (!suppliedElsewhere("ageRaster", sim)){
 
     if (suppliedElsewhere("ageRasterURL", sim) &
@@ -542,7 +567,7 @@ Init <- function(sim) {
     }
   }
 
-  # 3. Growth curves
+  # Growth curves
   if (!suppliedElsewhere("gcIndexRaster", sim)){
 
     if (suppliedElsewhere("gcIndexRasterURL", sim) &
@@ -568,80 +593,48 @@ Init <- function(sim) {
     }
   }
 
-  # 6. Disturbance rasters
-  if (!suppliedElsewhere("disturbanceRasters", sim)){
+  # Disturbances
+  if (suppliedElsewhere("userDistURL", sim) & !suppliedElsewhere("userDist", sim) &
+      !suppliedElsewhere("disturbanceMeta", sim)){
+
+    sim$userDist <- prepInputs(
+      destinationPath = inputPath(sim),
+      url = sim$userDistURL,
+      fun = data.table::fread
+    )
+  }
+
+  if (!suppliedElsewhere("disturbanceRasters", sim) & !suppliedElsewhere("disturbanceEvents", sim)){
 
     if (suppliedElsewhere("disturbanceRastersURL", sim) &
         !identical(sim$disturbanceRastersURL, extractURL("disturbanceRasters"))){
 
-      drPaths <- preProcess(
-        destinationPath = inputPath(sim),
-        url = sim$disturbanceRastersURL,
-        fun = NA
-      )$targetFilePath
-
-      # If extracted archive: list all files in directory
-      if (dirname(drPaths) != inputPath(sim)){
-        drPaths <- list.files(dirname(drPaths), full.names = TRUE)
-      }
-
-      # List files by year
-      drInfo <- data.frame(
-        path = drPaths,
-        name = tools::file_path_sans_ext(basename(drPaths)),
-        ext  = tolower(tools::file_ext(drPaths))
+      sim$disturbanceRasters <- lapply(
+        sim$disturbanceRastersURL,
+        CBMutils::dataPrep_disturbanceRastersURL,
+        destinationPath = inputPath(sim)
       )
-      drInfo$year_regexpr <- regexpr("[0-9]{4}", drInfo$name)
-      drInfo$year <- sapply(1:nrow(drInfo), function(i){
-        if (drInfo[i,]$year_regexpr != -1){
-          paste(
-            strsplit(drInfo[i,]$name, "")[[1]][0:3 + drInfo[i,]$year_regexpr],
-            collapse = "")
-        }else NA
-      })
-
-      if (all(is.na(drInfo$year))) stop(
-        "Disturbance raster(s) from 'disturbanceRasterURL' must be named with 4-digit years")
-      drInfo <- drInfo[!is.na(drInfo$year),, drop = FALSE]
-
-      # Choose file type to return for each year
-      drYears <- unique(sort(drInfo$year))
-      sim$disturbanceRasters <- sapply(setNames(drYears, drYears), function(drYear){
-        drInfoYear <- subset(drInfo, year == drYear)
-        if (nrow(drInfoYear) > 1){
-          if ("grd" %in% drInfoYear$ext) return(subset(drInfoYear, ext == "grd")$path)
-          if ("tif" %in% drInfoYear$ext) return(subset(drInfoYear, ext == "grd")$path)
-          drInfoYear$size <- file.size(drInfoYear$path)
-          drInfoYear$path[drInfoYear$size == max(drInfoYear$size)][[1]]
-        }else drInfoYear$path
-      })
 
     }else{
 
       if (!suppliedElsewhere("disturbanceRastersURL", sim, where = "user")) message(
-        "User has not supplied disturbance rasters ('disturbanceRasters'). ",
+        "User has not supplied disturbance rasters ('disturbanceRasters' or 'disturbanceRastersURL'). ",
         "Default for Saskatchewan will be used.")
 
-      # Set years where disturbance rasters are available
-      distYears <- 1985:2011
-
-      preProcess(
-        destinationPath = inputPath(sim),
-        url         = extractURL("disturbanceRasters"),
-        filename1   = "disturbance_testArea.zip",
-        targetFile  = "ReadMe.txt",
-        fun         = function() NULL,
-        alsoExtract = do.call(c, lapply(distYears, function(simYear){
-          paste0("disturbance_testArea/SaskDist_", simYear, c(".grd", ".gri", ".tif"))
-        })))
-
-      sim$disturbanceRasters <- setNames(
-        file.path(inputPath(sim), "disturbance_testArea", paste0("SaskDist_", distYears, ".grd")),
-        distYears)
+      sim$disturbanceRasters <- list(
+        CBMutils::dataPrep_disturbanceRastersURL(
+          destinationPath       = inputPath(sim),
+          disturbanceRastersURL = extractURL("disturbanceRasters"),
+          archive               = "disturbance_testArea.zip",
+          targetFile            = "disturbance_testArea",
+          alsoExtract           = do.call(c, lapply(1985:2011, function(simYear){
+            paste0("disturbance_testArea/SaskDist_", simYear, c(".grd", ".gri", ".tif"))
+          })))
+      )
 
       # Disturbance information
       if (!suppliedElsewhere("userDist", sim) & !suppliedElsewhere("userDistURL", sim) &
-          !suppliedElsewhere("mySpuDmids", sim)){
+          !suppliedElsewhere("disturbanceMeta", sim)){
 
         sim$userDist <- prepInputs(
           destinationPath = inputPath(sim),
@@ -649,6 +642,7 @@ Init <- function(sim) {
           targetFile = "SK_disturbances.csv",
           fun        = data.table::fread
         )
+        names(sim$userDist)[names(sim$userDist) == "rasterID"] <- "eventID"
       }
     }
   }

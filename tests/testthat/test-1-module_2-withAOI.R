@@ -15,6 +15,8 @@ test_that("Module runs with study AOI", {
 
     SpaDES.project::setupProject(
 
+      times = list(start = 1998, end = 2000),
+
       modules = "CBM_dataPrep_SK",
       paths   = list(
         projectPath = projectPath,
@@ -159,12 +161,29 @@ test_that("Module runs with study AOI", {
   expect_true(all(simTest$ages[simTest$realAges < 3] == 3))
 
 
-  ## Check output 'mySpuDmids' ----
+  ## Check output 'disturbanceEvents' -----
 
-  expect_true(!is.null(simTest$mySpuDmids))
-  expect_true(inherits(simTest$mySpuDmids, "data.table"))
+  expect_true(!is.null(simTest$disturbanceEvents))
+  expect_true(inherits(simTest$disturbanceEvents, "data.table"))
 
-  expect_equal(nrow(simTest$mySpuDmids), 8)
+  for (colName in c("pixelIndex", "year", "eventID")){
+    expect_true(colName %in% names(simTest$disturbanceEvents))
+    expect_true(is.integer(simTest$disturbanceEvents[[colName]]))
+    expect_true(all(!is.na(simTest$disturbanceEvents[[colName]])))
+  }
+
+  expect_true(all(simTest$disturbanceEvents$pixelIndex %in% simTest$allPixDT$pixelIndex))
+  expect_true(all(simTest$disturbanceEvents$year       %in% 1998:2000))
+
+  expect_equal(nrow(simTest$disturbanceEvents), 1393)
+
+
+  ## Check output 'disturbanceMeta' ----
+
+  expect_true(!is.null(simTest$disturbanceMeta))
+  expect_true(inherits(simTest$disturbanceMeta, "data.table"))
+
+  expect_equal(nrow(simTest$disturbanceMeta), 8)
 
   # Check that disturbances have been matched correctly
   rowsExpect <- rbind(
@@ -207,7 +226,7 @@ test_that("Module runs with study AOI", {
   )
 
   for (i in 1:nrow(rowsExpect)){
-    expect_equal(nrow(merge(simTest$mySpuDmids, rowsExpect[i,], by = names(rowsExpect))), 1)
+    expect_equal(nrow(merge(simTest$disturbanceMeta, rowsExpect[i,], by = names(rowsExpect))), 1)
   }
 
 
@@ -233,16 +252,6 @@ test_that("Module runs with study AOI", {
 
   # Check that there are no NAs
   expect_true(all(!is.na(simTest$lastPassDMtype)))
-
-
-  ## Check output 'disturbanceRasters' -----
-
-  expect_true(!is.null(simTest$disturbanceRasters))
-  expect_true(inherits(simTest$disturbanceRasters, "character"))
-
-  # Check at least one file was downloaded
-  expect_true(length(simTest$disturbanceRasters) >= 1)
-  expect_true(all(file.exists(simTest$disturbanceRasters)))
 
 })
 
