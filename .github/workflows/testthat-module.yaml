@@ -26,7 +26,7 @@ jobs:
           - {os: windows-latest, r: 'devel'}
           - {os: ubuntu-latest,  r: 'release'}
           - {os: ubuntu-latest,  r: 'devel'}
-          #- {os: macOS-latest,   r: 'release'}
+          - {os: macOS-latest,   r: 'release'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -49,6 +49,7 @@ jobs:
         with:
          packages: |
           any::testthat
+          any::googledrive
 
       - uses: PredictiveEcology/actions/install-Require@v0.2
         with:
@@ -72,7 +73,6 @@ jobs:
           cat("\nTESTING WITH MODULES:\n -", paste(getOption("spades.test.modules"), collapse = "\n - "), "\n\n")
 
           # Authorize Google Drive
-          install.packages("googledrive")
           googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTH"))
 
           # Run tests
