@@ -3,7 +3,7 @@ on:
     branches:
       - main
       - development
-      - suz-testthat
+      - testGHA
   pull_request:
     branches:
       - main
@@ -39,21 +39,16 @@ jobs:
 
       - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
 
-      # 2025-01-30: systemfonts R package failed to install due to these missing
-      # 2025-04-15: error also observed on release
-      - name: Install extra Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt -y install libfontconfig1-dev
-          sudo apt-get install libharfbuzz-dev libfribidi-dev libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev
-        shell: bash
-
       - uses: r-lib/actions/setup-r@v2
         with:
-          extra-repositories: 'https://predictiveecology.r-universe.dev/'
-          Ncpus: 2
           r-version: ${{ matrix.config.r }}
           use-public-rspm: false
+          Ncpus: 2
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+         packages: |
+          any::testthat
 
       - uses: PredictiveEcology/actions/install-Require@v0.2
         with:
@@ -63,44 +58,6 @@ jobs:
 
       - name: Install SpaDES.project
         run: Require::Require("PredictiveEcology/SpaDES.project@development", require = FALSE)
-        shell: Rscript {0}
-
-      - name: Install testthat
-        run: install.packages("testthat")
-        shell: Rscript {0}
-
-      - name: Install module package and other dependencies
-        if: runner.os == 'macOS'
-        run: |
-
-          ## 2025-01-30: on macOS:
-          ## R packages failed install via SpaDES.project::setupProject
-          ## None of the following tries have helped so far
-
-          # pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = "..")[[1]]
-          # Require::Require(pkgs[[1]])
-          # Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
-
-          # pkgs <- SpaDES.core::packages(modules = "[[name]]", paths = ".")[[1]]
-          # Require::Require(pkgs)
-          # Require::Require(c("PredictiveEcology/LandR@development"), require = FALSE)
-
-          # reqdPkgs = c(
-          #   "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
-          #   "reproducible" ,
-          #   "PredictiveEcology/CBMutils@development",
-          #   "PredictiveEcology/LandR@development"
-          # )
-          # Require::Require(reqdPkgs, require = FALSE)
-
-          # reqdPkgs = c(
-          #   "data.table", "fasterize", "magrittr", "RSQLite", "sf", "terra",
-          #   "reproducible" ,
-          #   "PredictiveEcology/CBMutils@development",
-          #   "PredictiveEcology/LandR@development"
-          # )
-          # Require::Require(reqdPkgs)
-
         shell: Rscript {0}
 
       - name: Run testthat
