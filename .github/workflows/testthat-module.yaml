@@ -42,7 +42,7 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
-          use-public-rspm: false
+          use-public-rspm: true
           Ncpus: 2
 
       - uses: r-lib/actions/setup-r-dependencies@v2
@@ -63,6 +63,9 @@ jobs:
 
       - name: Run testthat
         run: |
+
+          # testGHA
+          Sys.setenv(BRANCH_NAME = "development")
 
           # Set module branches
           options("spades.test.modules" = c(
