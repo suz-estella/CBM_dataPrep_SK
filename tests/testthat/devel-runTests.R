@@ -38,3 +38,6 @@
   ## Run module with a smaller study area
   testthat::test_file("tests/testthat/test-1-module_2-withAOI.R")
 
+  ## Run multi module integration test
+  testthat::test_file("tests/testthat/test-2-multiModule_SK-small_1998-2000.R")
+
