@@ -2,14 +2,11 @@ on:
   push:
     branches:
       - main
-      - development
-      - testGHA
   pull_request:
     branches:
       - main
-      - development
 
-name: testthat-module
+name: testthat-integration
 
 jobs:
   testthat-module:
